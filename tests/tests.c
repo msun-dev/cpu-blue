@@ -3,7 +3,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-uint16_t program0[4] = {
+#define ever(x) ;;
+#define lever(x) uint32_t i = 0; i < x; i++
+#define fever(x) ;false;
+
+uint16_t programm0[4] = {
 	0xF000,
 	0xF003,
 	0xF000,
@@ -11,13 +15,25 @@ uint16_t program0[4] = {
 };
 
 int main(void) {
-	cleanRam();
-	memmove(RAM, program0, (RAM_LENGTH * sizeof(uint16_t)));
+	BlueCpu_t* cpu = initCpu();
+	if (!cpu) {
+		printf("Malloc fail!\n");
+		exit(1);
+	}
+	printregs(cpu);
+	loadProgramm(cpu, programm0, 4 * sizeof(uint16_t));
+	printf("Memory:\n"); dumpMemory(cpu);
 
-	for (;;) {
-		emulateCycle();
-		dumpRegisters();
+	for (lever(5)) {
+		emulateCycle(cpu);
+		printregs(cpu);
 	}
 
 	exit(0);
+}
+
+void printregs(BlueCpu_t* cpu) {
+	printf("  PC|  IR| MAR| MBR| DIL| DOL| DSL|   A|  SR|   Z|\n");
+	dumpRegisters(cpu);
+	printf("-------------------------------------------------|\n");
 }
