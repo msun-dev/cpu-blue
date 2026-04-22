@@ -51,7 +51,6 @@ void dumpMemory(BlueCpu_t* cpu) {
 	}
 }
 
-
 // CPU logic
 /// Ready
 void clearRam(BlueCpu_t* cpu) {
@@ -156,15 +155,14 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 	case OP_SRJ:
 		switch (tick) {
 			case 6:
-				if (getRegister(cpu, REG_A) == 1)
-					setRegister(cpu, REG_PC, 0);
+				setRegister(cpu, REG_A, getRegister(cpu, REG_PC) & 0x0FFF);
 				break;
 			case 7:
-				if (getRegister(cpu, REG_A) == 1)
-					setRegister(cpu, REG_PC, getRegister(cpu, REG_IR) & 0x0FFF);
+				clrRegister(cpu, REG_PC);
 				break;
 			case 8:
-				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_IR) & 0x0FFF);
+				setRegister(cpu, REG_PC,  getRegister(cpu, REG_IR) & 0x0FFF);
 				break;
 		}
 		break;
@@ -172,11 +170,11 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 	case OP_JMA:
 		switch (tick) {
 			case 6:
-				if ((getRegister(cpu, REG_A) >> 16) == 1)
-					setRegister(cpu, REG_PC, 0);
+				if ((getRegister(cpu, REG_A) & 0x8000)) // NB
+					clrRegister(cpu, REG_PC);
 				break;
 			case 7:
-				if (getRegister(cpu, REG_A) == 1)
+				if ((getRegister(cpu, REG_A) & 0x8000)) // NB
 					setRegister(cpu, REG_PC, getRegister(cpu, REG_IR) & 0x0FFF);
 				break;
 			case 8:
