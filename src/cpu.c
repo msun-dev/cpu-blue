@@ -98,11 +98,17 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 	switch (instr) {
 
 	case OP_HLT:
-		if (tick == 7) {
+		switch (tick) {
+		case 7:
 			;//cpu->run = false;
+			break;
+		case 8:
+			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+			break;
+		}
+		if (tick == 7) {
 		}
 		else if (tick == 8) {
-			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
 		}
 		break;
 
@@ -128,42 +134,48 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		break;
 
 	case OP_SRJ:
-		if (tick == 6) {
-			if (getRegister(cpu, REG_A) == 1)
-				setRegister(cpu, REG_PC, 0);
-		}
-		else if (tick == 7) {
-			if (getRegister(cpu, REG_A) == 1)
-				setRegister(cpu, REG_PC, getRegister(cpu, REG_IR) & 0x0FFF);
-		}
-		else if (tick == 8) {
-			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+		switch (tick) {
+			case 6:
+				if (getRegister(cpu, REG_A) == 1)
+					setRegister(cpu, REG_PC, 0);
+				break;
+			case 7:
+				if (getRegister(cpu, REG_A) == 1)
+					setRegister(cpu, REG_PC, getRegister(cpu, REG_IR) & 0x0FFF);
+				break;
+			case 8:
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+				break;
 		}
 		break;
 
 	case OP_JMA:
-		if (tick == 6) {
-			if ((getRegister(cpu, REG_A) >> 16) == 1)
-				setRegister(cpu, REG_PC, 0);
-		}
-		else if (tick == 7) {
-			if (getRegister(cpu, REG_A) == 1)
-				setRegister(cpu, REG_PC, getRegister(cpu, REG_IR) & 0x0FFF);
-		}
-		else if (tick == 8) {
-			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+		switch (tick) {
+			case 6:
+				if ((getRegister(cpu, REG_A) >> 16) == 1)
+					setRegister(cpu, REG_PC, 0);
+				break;
+			case 7:
+				if (getRegister(cpu, REG_A) == 1)
+					setRegister(cpu, REG_PC, getRegister(cpu, REG_IR) & 0x0FFF);
+				break;
+			case 8:
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+				break;
 		}
 		break;
 
 	case OP_JMP:
-		if (tick == 6) {
-			setRegister(cpu, REG_PC, 0);
-		}
-		else if (tick == 7) {
-			setRegister(cpu, REG_PC, (getRegister(cpu, REG_IR) & 0x0FFF));
-		}
-		else if (tick == 8) {
-			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+		switch (tick) {
+			case 6:
+				setRegister(cpu, REG_PC, 0);
+				break;
+			case 7:
+				setRegister(cpu, REG_PC, (getRegister(cpu, REG_IR) & 0x0FFF));
+				break;
+			case 8:
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+				break;
 		}
 		break;
 
@@ -205,14 +217,16 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		break;
 
 	case OP_CSA:
-		if (tick == 6) {
-			clrRegister(cpu, REG_A);
-		}
-		else if (tick == 7) {
-			setRegister(cpu, REG_A, getRegister(cpu, REG_SR));
-		}
-		else if (tick == 8) {
-			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+		switch (tick) {
+			case 6:
+				clrRegister(cpu, REG_A);
+				break;
+			case 7:
+				setRegister(cpu, REG_A, getRegister(cpu, REG_SR));
+				break;
+			case 8:
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+				break;
 		}
 		break;
 
@@ -222,6 +236,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		}
 		break;
 	default:
+		printf("Something really bad happened! You are in the default case!\n");
 		break;
 	}
 }
