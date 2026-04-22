@@ -10,8 +10,8 @@
 #define REGS_LENGTH 10
 
 typedef enum State {
-	EXECUTE,
-	FETCH,
+	ST_EXECUTE,
+	ST_FETCH,
 } State;
 
 typedef enum Register {
@@ -53,23 +53,33 @@ typedef struct BlueCpu_t {
 	uint16_t registers[REGS_LENGTH];
 } BlueCpu_t;
 
-// Ready
+// User API
+/// Initialisation
 BlueCpu_t* initCpu        ();
-void       clearRam       (BlueCpu_t* cpu);
-void       clearRegisters (BlueCpu_t* cpu);
+void       deinitCpu      (BlueCpu_t* cpu);
 void       loadProgramm   (BlueCpu_t* cpu, uint16_t* programm, uint32_t size);
-// Process
+/// Process
 void emulateCycle   (BlueCpu_t* cpu);
-void processTick    (BlueCpu_t* cpu, uint8_t tick);
-// Registers
-void     setRegister (BlueCpu_t* cpu, Register r, uint16_t value);
-uint16_t getRegister (BlueCpu_t* cpu, Register r);
-void     incRegister (BlueCpu_t* cpu, Register r);
-//void     decRegister (BlueCpu_t* cpu, Register r);
-// Instructions
-uint8_t getInstruction  (BlueCpu_t* cpu);
-void    execInstruction (BlueCpu_t* cpu, Instruction instr, uint8_t tick);
-// Debug
+/// Debug
 void dumpRegisters (BlueCpu_t* cpu);
 void dumpMemory    (BlueCpu_t* cpu);
+
+// CPU logic
+/// Initialisation
+void       clearRam       (BlueCpu_t* cpu);
+void       clearRegisters (BlueCpu_t* cpu);
+/// Process
+void processTick    (BlueCpu_t* cpu, uint8_t tick);
+/// States
+//void  setState(BlueCpu_t* cpu, State s);
+//State getState(BlueCpu_t* cpu);
+/// Registers
+void     setRegister (BlueCpu_t* cpu, Register r, uint16_t value);
+uint16_t getRegister (BlueCpu_t* cpu, Register r);
+void     clrRegister (BlueCpu_t* cpu, Register r);
+void     incRegister (BlueCpu_t* cpu, Register r);
+//void     decRegister (BlueCpu_t* cpu, Register r);
+/// Instructions
+uint8_t getInstruction  (BlueCpu_t* cpu);
+void    execInstruction (BlueCpu_t* cpu, Instruction instr, uint8_t tick);
 
