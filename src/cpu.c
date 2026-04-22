@@ -1,10 +1,5 @@
 #include "../include/cpu.h"
 
-#define FETCH_CYCLE_END(x, y, z) \
-	if (tick == 6) { x; }      \
-	else if (tick == 7) { y; } \
-	else if (tick == 8) { z; } \
-
 // Ready
 BlueCpu_t* initCpu() {
 	BlueCpu_t* cpu = NULL;
@@ -14,7 +9,7 @@ BlueCpu_t* initCpu() {
 		return NULL;
 	}
 	cpu->clock_pulse = 0;
-	cpu->state = FETCH;
+	cpu->state = ST_FETCH;
 	clearRam(cpu);
 	clearRegisters(cpu);
 	return cpu;
@@ -33,6 +28,10 @@ void loadProgramm(BlueCpu_t* cpu, uint16_t* programm, uint32_t size) {
 	memcpy(cpu->ram, programm, size);
 }
 
+void deinitCpu(BlueCpu_t* cpu) {
+	free(cpu);
+}
+
 // Process
 void emulateCycle(BlueCpu_t* cpu) {
 	uint8_t* clock_pulse = &(cpu->clock_pulse);
@@ -45,21 +44,21 @@ void processTick(BlueCpu_t* cpu, uint8_t tick) {
 	case 1:
 		break;
 	case 2:
-		if (cpu->state == FETCH)
+		if (cpu->state == ST_FETCH)
 			incRegister(cpu, REG_PC);
 		break;
 	case 3:
-		if (cpu->state == FETCH)
+		if (cpu->state == ST_FETCH)
 			setRegister(cpu, REG_MBR, 0x0000);
 		break;
 	case 4:
-		if (cpu->state == FETCH) {
+		if (cpu->state == ST_FETCH) {
 			setRegister(cpu, REG_IR, 0x0000);
 			setRegister(cpu, REG_MBR, cpu->ram[getRegister(cpu, REG_MAR)]);
 		}
 		break;
 	case 5:
-		if (cpu->state == FETCH)
+		if (cpu->state == ST_FETCH)
 			setRegister(cpu, REG_IR, getRegister(cpu, REG_MBR));
 		break;
 	case 6:
@@ -83,6 +82,9 @@ uint16_t getRegister(BlueCpu_t* cpu, Register reg) {
 	return cpu->registers[reg];
 }
 
+void clrRegister(BlueCpu_t* cpu, Register reg) {
+	setRegister(cpu, reg, 0x0000);
+}
 void incRegister(BlueCpu_t* cpu, Register reg) {
 	setRegister(cpu, reg, getRegister(cpu, reg) + 1);
 }
@@ -93,61 +95,127 @@ uint8_t getInstruction(BlueCpu_t* cpu) {
 }
 
 void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
-	switch(instr) {
+	switch (instr) {
+
 	case OP_HLT:
+		if (tick == 7) {
+			;//cpu->run = false;
+		}
+		else if (tick == 8) {
+			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+		}
 		break;
+
 	case OP_ADD:
 		break;
+
 	case OP_XOR:
 		break;
+
 	case OP_AND:
 		break;
+
 	case OP_IOR:
 		break;
+
 	case OP_NOT:
 		break;
+
 	case OP_LDA:
 		break;
+
 	case OP_STA:
 		break;
+
 	case OP_SRJ:
-		FETCH_CYCLE_END(
-			if (getRegister(cpu, REG_A) == 1) // pulse == 6
-				setRegister(cpu, REG_PC, 0),
-			if (getRegister(cpu, REG_A) == 1) // pulse == 7
-				setRegister(cpu, REG_PC, getRegister(cpu, REG_IR) & 0x0FFF),
-			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC)) // pulse == 8
-		);
+		if (tick == 6) {
+			if (getRegister(cpu, REG_A) == 1)
+				setRegister(cpu, REG_PC, 0);
+		}
+		else if (tick == 7) {
+			if (getRegister(cpu, REG_A) == 1)
+				setRegister(cpu, REG_PC, getRegister(cpu, REG_IR) & 0x0FFF);
+		}
+		else if (tick == 8) {
+			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+		}
 		break;
+
 	case OP_JMA:
-		FETCH_CYCLE_END(
-			if (getRegister(cpu, REG_A) == 1) // pulse == 6
-				setRegister(cpu, REG_PC, 0),
-			if (getRegister(cpu, REG_A) == 1) // pulse == 7
-				setRegister(cpu, REG_PC, getRegister(cpu, REG_IR) & 0x0FFF),
-			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC)); // pulse == 8
-		);
+		if (tick == 6) {
+			if ((getRegister(cpu, REG_A) >> 16) == 1)
+				setRegister(cpu, REG_PC, 0);
+		}
+		else if (tick == 7) {
+			if (getRegister(cpu, REG_A) == 1)
+				setRegister(cpu, REG_PC, getRegister(cpu, REG_IR) & 0x0FFF);
+		}
+		else if (tick == 8) {
+			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+		}
 		break;
+
 	case OP_JMP:
-		FETCH_CYCLE_END(
-			setRegister(cpu, REG_PC, 0), // pulse == 6
-			setRegister(cpu, REG_PC, (getRegister(cpu, REG_IR) & 0x0FFF)), // pulse == 7
-			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC)) // pulse = 8
-		);
+		if (tick == 6) {
+			setRegister(cpu, REG_PC, 0);
+		}
+		else if (tick == 7) {
+			setRegister(cpu, REG_PC, (getRegister(cpu, REG_IR) & 0x0FFF));
+		}
+		else if (tick == 8) {
+			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+		}
 		break;
+
 	case OP_INP:
 		break;
+
 	case OP_OUT:
 		break;
+
 	case OP_RAL:
+		if (cpu->state == ST_FETCH) {
+			switch (tick) {
+			case 6:
+				clrRegister(cpu, REG_Z);
+				break;
+			case 7:
+				setRegister(cpu, REG_Z, getRegister(cpu, REG_A));
+				break;
+			case 8:
+				cpu->state = ST_EXECUTE;
+				break;
+			}
+		}
+		else if (cpu->state == ST_EXECUTE) {
+			switch (tick) {
+				case 1:
+					clrRegister(cpu, REG_A);
+					break;
+				case 2:
+					setRegister(cpu, REG_A, 2 * getRegister(cpu, REG_Z));
+					break;
+				case 8:
+					setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+					cpu->state = ST_FETCH;
+					break;
+			}
+
+		}
 		break;
+
 	case OP_CSA:
-		FETCH_CYCLE_END(
-			setRegister(cpu, REG_A, 0x0000), // pulse = 6
-			setRegister(cpu, REG_A, getRegister(cpu, REG_SR)), // pulse = 7
-			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC)) // pulse = 8
-		);
+		if (tick == 6) {
+			clrRegister(cpu, REG_A);
+		}
+		else if (tick == 7) {
+			setRegister(cpu, REG_A, getRegister(cpu, REG_SR));
+		}
+		else if (tick == 8) {
+			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+		}
 		break;
+
 	case OP_NOP:
 		if (tick == 8) {
 			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
