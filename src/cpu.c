@@ -1,15 +1,9 @@
 #include "../include/cpu.h"
 
 #define FETCH_CYCLE_END(x, y, z) \
-	if (tick == 6) {      \
-		x;                  \
-	}                     \
-	else if (tick == 7) { \
-		y;                  \
-	}                     \
-	else if (tick == 8) { \
-		z;                  \
-	}                     \
+	if (tick == 6) { x; }      \
+	else if (tick == 7) { y; } \
+	else if (tick == 8) { z; } \
 
 // Ready
 BlueCpu_t* initCpu() {
