@@ -13,6 +13,9 @@ BlueCpu_t* initCpu() {
 	cpu->state = ST_FETCH;
 	clearRam(cpu);
 	clearRegisters(cpu);
+
+	cpu->R = false;
+	cpu->TRA = false;
 	return cpu;
 }
 
@@ -185,15 +188,15 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 
 	case OP_JMP:
 		switch (tick) {
-			case 6:
-				setRegister(cpu, REG_PC, 0);
-				break;
-			case 7:
-				setRegister(cpu, REG_PC, (getRegister(cpu, REG_IR) & 0x0FFF));
-				break;
-			case 8:
-				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
-				break;
+		case 6:
+			setRegister(cpu, REG_PC, 0);
+			break;
+		case 7:
+			setRegister(cpu, REG_PC, (getRegister(cpu, REG_IR) & 0x0FFF));
+			break;
+		case 8:
+			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+			break;
 		}
 		break;
 
@@ -201,6 +204,35 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		break;
 
 	case OP_OUT:
+		if (cpu->state == ST_FETCH) {
+			switch (tick) {
+			case 6:
+				setRegister(cpu, REG_DOL, getRegister(cpu, REG_A) >> 8 & 0xF000);
+				setRegister(cpu, REG_DSL, getRegister(cpu, REG_A) & 0x003F);
+				break;
+			case 7:
+				cpu->TRA = true;
+				break;
+			case 8:
+				cpu->state == ST_EXECUTE;
+				break;
+			}
+		}
+		else if (cpu->state == ST_EXECUTE) {
+			switch (tick) {
+			case 6:
+				if (cpu->R == true) {
+					cpu->TRA = false;
+				}
+				break;
+			case 8:
+				if (cpu->TRA == false) {
+					cpu->state = ST_FETCH;
+					setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+				}
+				break;
+			}
+		}
 		break;
 
 	case OP_RAL:
