@@ -1,6 +1,7 @@
 #include "../include/cpu.h"
 
-// Ready
+// User API
+/// Initialisation
 BlueCpu_t* initCpu() {
 	BlueCpu_t* cpu = NULL;
 	cpu = malloc(sizeof(BlueCpu_t));
@@ -15,14 +16,6 @@ BlueCpu_t* initCpu() {
 	return cpu;
 }
 
-void clearRam(BlueCpu_t* cpu) {
-	for (uint32_t i = 0; i < RAM_LENGTH; cpu->ram[i++] = 0x0000);
-}
-
-void clearRegisters(BlueCpu_t* cpu) {
-	for (uint32_t i = 0; i < REGS_LENGTH; setRegister(cpu, i++, 0x0000));
-}
-
 void loadProgramm(BlueCpu_t* cpu, uint16_t* programm, uint32_t size) {
 	clearRam(cpu);
 	memcpy(cpu->ram, programm, size);
@@ -32,13 +25,44 @@ void deinitCpu(BlueCpu_t* cpu) {
 	free(cpu);
 }
 
-// Process
+/// Process
 void emulateCycle(BlueCpu_t* cpu) {
 	uint8_t* clock_pulse = &(cpu->clock_pulse);
 	for (*clock_pulse = 1; *clock_pulse < PULSE_AMT + 1; *clock_pulse += 1)
 		processTick(cpu, *clock_pulse);
 }
 
+/// Debug
+void dumpRegisters(BlueCpu_t* cpu) {
+	for (uint16_t i = 0; i < REGS_LENGTH; i++)
+		printf("%04X|", (i == REG_DSL || i == REG_DIL || i == REG_DOL)
+		                 ? getRegister(cpu, i) & 0x00FF
+		                 : getRegister(cpu, i)
+		);
+	putchar('\n');
+}
+
+void dumpMemory(BlueCpu_t* cpu) {
+	uint16_t ram_data = 0x0000;
+	for (uint32_t i = 0; i < RAM_LENGTH; i++) {
+		ram_data = cpu->ram[i];
+		if (ram_data != 0x0000)
+			printf("%d - 0x%4X\n", i, ram_data);
+	}
+}
+
+
+// CPU logic
+/// Ready
+void clearRam(BlueCpu_t* cpu) {
+	for (uint32_t i = 0; i < RAM_LENGTH; cpu->ram[i++] = 0x0000);
+}
+
+void clearRegisters(BlueCpu_t* cpu) {
+	for (uint32_t i = 0; i < REGS_LENGTH; setRegister(cpu, i++, 0x0000));
+}
+
+/// Process
 void processTick(BlueCpu_t* cpu, uint8_t tick) {
 	switch (tick) {
 	case 1:
@@ -73,7 +97,7 @@ void processTick(BlueCpu_t* cpu, uint8_t tick) {
 	execInstruction(cpu, getInstruction(cpu), tick);
 }
 
-// Registers
+/// Registers
 void setRegister(BlueCpu_t* cpu, Register reg, uint16_t value) {
 	cpu->registers[reg] = value;
 }
@@ -89,7 +113,7 @@ void incRegister(BlueCpu_t* cpu, Register reg) {
 	setRegister(cpu, reg, getRegister(cpu, reg) + 1);
 }
 
-// Instructions
+/// Instructions
 uint8_t getInstruction(BlueCpu_t* cpu) {
 	return ((getRegister(cpu, REG_IR) & 0xF000) >> 12);
 }
@@ -105,10 +129,6 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		case 8:
 			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
 			break;
-		}
-		if (tick == 7) {
-		}
-		else if (tick == 8) {
 		}
 		break;
 
@@ -212,7 +232,6 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 					cpu->state = ST_FETCH;
 					break;
 			}
-
 		}
 		break;
 
@@ -238,25 +257,6 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 	default:
 		printf("Something really bad happened! You are in the default case!\n");
 		break;
-	}
-}
-
-// Debug
-void dumpRegisters(BlueCpu_t* cpu) {
-	for (uint16_t i = 0; i < REGS_LENGTH; i++)
-		printf("%04X|", (i == REG_DSL || i == REG_DIL || i == REG_DOL)
-		                 ? getRegister(cpu, i) & 0x00FF
-		                 : getRegister(cpu, i)
-		);
-	putchar('\n');
-}
-
-void dumpMemory(BlueCpu_t* cpu) {
-	uint16_t ram_data = 0x0000;
-	for (uint32_t i = 0; i < RAM_LENGTH; i++) {
-		ram_data = cpu->ram[i];
-		if (ram_data != 0x0000)
-			printf("%d - 0x%4X\n", i, ram_data);
 	}
 }
 
