@@ -39,8 +39,8 @@ void emulateCycle(BlueCpu_t* cpu) {
 void dumpRegisters(BlueCpu_t* cpu) {
 	for (uint16_t i = 0; i < REGS_LENGTH; i++)
 		printf("%04X|", (i == REG_DSL || i == REG_DIL || i == REG_DOL)
-		                 ? getRegister(cpu, i) & 0x00FF
-		                 : getRegister(cpu, i)
+		                ? getRegister(cpu, i) & 0x00FF
+		                : getRegister(cpu, i)
 		);
 	putchar('\n');
 }
@@ -135,6 +135,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		break;
 
 	case OP_ADD:
+		// Disable cpu when -2^15>sum>2^15-1
 		break;
 
 	case OP_XOR:
@@ -200,10 +201,11 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		}
 		break;
 
-	case OP_INP:
+	case OP_INP: // Reading INPut from device
+		// A (XXYY): XX = 0x00, XX <- xx from YY device.
 		break;
 
-	case OP_OUT:
+	case OP_OUT: // Sending OUTput to a device
 		if (cpu->state == ST_FETCH) {
 			switch (tick) {
 			case 6:
@@ -214,7 +216,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 				cpu->TRA = true;
 				break;
 			case 8:
-				cpu->state == ST_EXECUTE;
+				cpu->state = ST_EXECUTE;
 				break;
 			}
 		}
