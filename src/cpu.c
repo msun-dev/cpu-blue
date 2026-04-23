@@ -10,7 +10,7 @@ BlueCpu_t* initCpu() {
 		return NULL;
 	}
 	cpu->clock_pulse = 0;
-	cpu->state = ST_FETCH;
+	setState(cpu, ST_FETCH);
 	clearRam(cpu);
 	clearRegisters(cpu);
 
@@ -70,21 +70,21 @@ void processTick(BlueCpu_t* cpu, uint8_t tick) {
 	case 1:
 		break;
 	case 2:
-		if (cpu->state == ST_FETCH)
+		if (getState(cpu) == ST_FETCH)
 			incRegister(cpu, REG_PC);
 		break;
 	case 3:
-		if (cpu->state == ST_FETCH)
+		if (getState(cpu) == ST_FETCH)
 			setRegister(cpu, REG_MBR, 0x0000);
 		break;
 	case 4:
-		if (cpu->state == ST_FETCH) {
+		if (getState(cpu) == ST_FETCH) {
 			setRegister(cpu, REG_IR, 0x0000);
 			setRegister(cpu, REG_MBR, cpu->ram[getRegister(cpu, REG_MAR)]);
 		}
 		break;
 	case 5:
-		if (cpu->state == ST_FETCH)
+		if (getState(cpu) == ST_FETCH)
 			setRegister(cpu, REG_IR, getRegister(cpu, REG_MBR));
 		break;
 	case 6:
@@ -97,6 +97,15 @@ void processTick(BlueCpu_t* cpu, uint8_t tick) {
 		break;
 	}
 	execInstruction(cpu, getInstruction(cpu), tick);
+}
+
+/// States
+void setState(BlueCpu_t* cpu, State s) {
+	cpu->state = s;
+}
+
+State getState(BlueCpu_t* cpu) {
+	return cpu->state;
 }
 
 /// Registers
@@ -206,7 +215,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		break;
 
 	case OP_OUT: // Sending OUTput to a device
-		if (cpu->state == ST_FETCH) {
+		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
 			case 6:
 				setRegister(cpu, REG_DOL, getRegister(cpu, REG_A) >> 8 & 0xF000);
@@ -216,11 +225,11 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 				cpu->TRA = true;
 				break;
 			case 8:
-				cpu->state = ST_EXECUTE;
+				setState(cpu, ST_EXECUTE);
 				break;
 			}
 		}
-		else if (cpu->state == ST_EXECUTE) {
+		else if (getState(cpu) == ST_EXECUTE) {
 			switch (tick) {
 			case 6:
 				if (cpu->R == true) {
@@ -229,7 +238,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 				break;
 			case 8:
 				if (cpu->TRA == false) {
-					cpu->state = ST_FETCH;
+					setState(cpu, ST_FETCH);
 					setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
 				}
 				break;
@@ -238,7 +247,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		break;
 
 	case OP_RAL:
-		if (cpu->state == ST_FETCH) {
+		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
 			case 6:
 				clrRegister(cpu, REG_Z);
@@ -247,11 +256,11 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 				setRegister(cpu, REG_Z, getRegister(cpu, REG_A));
 				break;
 			case 8:
-				cpu->state = ST_EXECUTE;
+				setState(cpu, ST_EXECUTE);
 				break;
 			}
 		}
-		else if (cpu->state == ST_EXECUTE) {
+		else if (getState(cpu) == ST_EXECUTE) {
 			switch (tick) {
 				case 1:
 					clrRegister(cpu, REG_A);
@@ -261,7 +270,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 					break;
 				case 8:
 					setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
-					cpu->state = ST_FETCH;
+					setState(cpu, ST_FETCH);
 					break;
 			}
 		}
