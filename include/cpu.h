@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define PULSE_AMT 8
 #define RAM_LENGTH 4096
@@ -15,16 +16,16 @@ typedef enum State {
 } State;
 
 typedef enum Register {
-	REG_PC  = 0,
-	REG_IR  = 1,
-	REG_MAR = 2,
-	REG_MBR = 3,
-	REG_DIL = 4,
-	REG_DOL = 5,
-	REG_DSL = 6,
-	REG_A   = 7,
-	REG_SR  = 8,
-	REG_Z   = 9,
+	REG_PC  = 0, // program counter
+	REG_IR  = 1, // current instruction
+	REG_MAR = 2, //
+	REG_MBR = 3, //
+	REG_DIL = 4, //
+	REG_DOL = 5, //
+	REG_DSL = 6, // 
+	REG_A   = 7, // accumulator A
+	REG_SR  = 8, // 
+	REG_Z   = 9, // accumulator Z (unavailable to User)
 } Register;
 
 typedef enum Instruction {
@@ -51,28 +52,35 @@ typedef struct BlueCpu_t {
 	uint16_t ram[RAM_LENGTH];
 	State state;
 	uint16_t registers[REGS_LENGTH];
+
+	bool ENABLED;
+	bool R;
+	bool TRA;
 } BlueCpu_t;
 
 // User API
 /// Initialisation
-BlueCpu_t* initCpu        ();
-void       deinitCpu      (BlueCpu_t* cpu);
-void       loadProgramm   (BlueCpu_t* cpu, uint16_t* programm, uint32_t size);
+BlueCpu_t* initCpu      ();
+void       deinitCpu    (BlueCpu_t* cpu);
+void       loadProgramm (BlueCpu_t* cpu, uint16_t* programm, uint32_t size);
 /// Process
-void emulateCycle   (BlueCpu_t* cpu);
+void emulateCycle (BlueCpu_t* cpu);
+void enableCpu    (BlueCpu_t* cpu);
 /// Debug
 void dumpRegisters (BlueCpu_t* cpu);
 void dumpMemory    (BlueCpu_t* cpu);
 
 // CPU logic
 /// Initialisation
-void       clearRam       (BlueCpu_t* cpu);
-void       clearRegisters (BlueCpu_t* cpu);
+void clearRam       (BlueCpu_t* cpu);
+void clearRegisters (BlueCpu_t* cpu);
 /// Process
 void processTick    (BlueCpu_t* cpu, uint8_t tick);
 /// States
-//void  setState(BlueCpu_t* cpu, State s);
-//State getState(BlueCpu_t* cpu);
+void  setState(BlueCpu_t* cpu, State s);
+State getState(BlueCpu_t* cpu);
+/// Switches
+
 /// Registers
 void     setRegister (BlueCpu_t* cpu, Register r, uint16_t value);
 uint16_t getRegister (BlueCpu_t* cpu, Register r);
