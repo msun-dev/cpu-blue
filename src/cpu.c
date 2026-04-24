@@ -195,9 +195,17 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 				clrRegister(cpu, REG_A);
 				clrRegister(cpu, REG_MBR);
 				break;
-			case 7:
-				// TODO: Disable cpu when overflow: -2^15>sum>2^15-1
-				// TODO: OP_ADD
+			case 7:;
+				uint32_t result = getRegister(cpu, REG_Z) + getRegister(cpu, REG_MBR);
+				if ((getRegister(cpu, REG_Z) & 0x8000)
+				    && (getRegister(cpu, REG_MBR) & 0x8000)
+				    && !(result & 0x8000))
+					setSwitch(cpu, SW_POWER, false);
+				else if (!(getRegister(cpu, REG_Z) & 0x8000)
+				         && !(getRegister(cpu, REG_MBR) & 0x8000)
+				         && (result & 0x8000))
+					setSwitch(cpu, SW_POWER, false);
+				setRegister(cpu, REG_A, (uint16_t)result);
 				break;
 			case 8:
 				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
