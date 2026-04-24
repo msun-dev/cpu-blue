@@ -1,5 +1,11 @@
 #include "../include/cpu.h"
 
+// TODO: write leftover ops
+// TODO: implement switches
+// TODO: implement device interface
+// TODO: Remove stdio
+// TODO: Replace bool
+
 // User API
 /// Initialisation
 BlueCpu_t* initCpu() {
@@ -9,13 +15,15 @@ BlueCpu_t* initCpu() {
 		free(cpu);
 		return NULL;
 	}
+
 	cpu->clock_pulse = 0;
 	setState(cpu, ST_FETCH);
 	clearRam(cpu);
 	clearRegisters(cpu);
+	setSwitch(cpu, SW_POWER, false);
+	setSwitch(cpu, SW_READY, false);
+	setSwitch(cpu, SW_TRA, false);
 
-	cpu->R = false;
-	cpu->TRA = false;
 	return cpu;
 }
 
@@ -28,16 +36,30 @@ void deinitCpu(BlueCpu_t* cpu) {
 	free(cpu);
 }
 
+/// Switches
+void enableCpu(BlueCpu_t* cpu) {
+	setSwitch(cpu, SW_POWER, true);
+}
+
+void disableCpu (BlueCpu_t* cpu) {
+	setSwitch(cpu, SW_POWER, false);
+}
+
 /// Process
-void emulateCycle(BlueCpu_t* cpu) {
+uint8_t emulateCycle(BlueCpu_t* cpu) {
+	if (getSwitch(cpu, SW_POWER) == false) {
+		return 1;
+	}
+
 	uint8_t* clock_pulse = &(cpu->clock_pulse);
 	for (*clock_pulse = 1; *clock_pulse < PULSE_AMT + 1; *clock_pulse += 1)
 		processTick(cpu, *clock_pulse);
+	return 0;
 }
 
 /// Debug
 void dumpRegisters(BlueCpu_t* cpu) {
-	for (uint16_t i = 0; i < REGS_LENGTH; i++)
+	for (uint16_t i = 0; i < REGS_LEN; i++)
 		printf("%04X|", (i == REG_DSL || i == REG_DIL || i == REG_DOL)
 		                ? getRegister(cpu, i) & 0x00FF
 		                : getRegister(cpu, i)
@@ -47,7 +69,7 @@ void dumpRegisters(BlueCpu_t* cpu) {
 
 void dumpMemory(BlueCpu_t* cpu) {
 	uint16_t ram_data = 0x0000;
-	for (uint32_t i = 0; i < RAM_LENGTH; i++) {
+	for (uint32_t i = 0; i < RAM_LEN; i++) {
 		ram_data = cpu->ram[i];
 		if (ram_data != 0x0000)
 			printf("%d - 0x%4X\n", i, ram_data);
@@ -57,11 +79,45 @@ void dumpMemory(BlueCpu_t* cpu) {
 // CPU logic
 /// Ready
 void clearRam(BlueCpu_t* cpu) {
-	for (uint32_t i = 0; i < RAM_LENGTH; cpu->ram[i++] = 0x0000);
+	for (uint32_t i = 0; i < RAM_LEN; cpu->ram[i++] = 0x0000);
 }
 
 void clearRegisters(BlueCpu_t* cpu) {
-	for (uint32_t i = 0; i < REGS_LENGTH; setRegister(cpu, i++, 0x0000));
+	for (uint32_t i = 0; i < REGS_LEN; setRegister(cpu, i++, 0x0000));
+}
+
+/// States
+void setState(BlueCpu_t* cpu, State s) {
+	cpu->state = s;
+}
+
+State getState(BlueCpu_t* cpu) {
+	return cpu->state;
+}
+
+/// Switches
+void setSwitch(BlueCpu_t* cpu, Switch sw, bool value) {
+	cpu->status_switches[sw] = value;
+}
+
+Switch getSwitch(BlueCpu_t* cpu, Switch sw) {
+	return cpu->status_switches[sw];
+}
+
+/// Registers
+void setRegister(BlueCpu_t* cpu, Register reg, uint16_t value) {
+	cpu->registers[reg] = value;
+}
+
+uint16_t getRegister(BlueCpu_t* cpu, Register reg) {
+	return cpu->registers[reg];
+}
+
+void clrRegister(BlueCpu_t* cpu, Register reg) {
+	setRegister(cpu, reg, 0x0000);
+}
+void incRegister(BlueCpu_t* cpu, Register reg) {
+	setRegister(cpu, reg, getRegister(cpu, reg) + 1);
 }
 
 /// Process
@@ -99,31 +155,6 @@ void processTick(BlueCpu_t* cpu, uint8_t tick) {
 	execInstruction(cpu, getInstruction(cpu), tick);
 }
 
-/// States
-void setState(BlueCpu_t* cpu, State s) {
-	cpu->state = s;
-}
-
-State getState(BlueCpu_t* cpu) {
-	return cpu->state;
-}
-
-/// Registers
-void setRegister(BlueCpu_t* cpu, Register reg, uint16_t value) {
-	cpu->registers[reg] = value;
-}
-
-uint16_t getRegister(BlueCpu_t* cpu, Register reg) {
-	return cpu->registers[reg];
-}
-
-void clrRegister(BlueCpu_t* cpu, Register reg) {
-	setRegister(cpu, reg, 0x0000);
-}
-void incRegister(BlueCpu_t* cpu, Register reg) {
-	setRegister(cpu, reg, getRegister(cpu, reg) + 1);
-}
-
 /// Instructions
 uint8_t getInstruction(BlueCpu_t* cpu) {
 	return ((getRegister(cpu, REG_IR) & 0xF000) >> 12);
@@ -131,11 +162,10 @@ uint8_t getInstruction(BlueCpu_t* cpu) {
 
 void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 	switch (instr) {
-
 	case OP_HLT:
 		switch (tick) {
 		case 7:
-			;//cpu->run = false;
+			setSwitch(cpu, SW_POWER, false);
 			break;
 		case 8:
 			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
@@ -144,7 +174,37 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		break;
 
 	case OP_ADD:
-		// Disable cpu when -2^15>sum>2^15-1
+		if (getState(cpu) == ST_FETCH) {
+			switch (tick) {
+			case 6:
+				clrRegister(cpu, REG_Z);
+				break;
+			case 7:
+				setRegister(cpu, REG_Z, getRegister(cpu, REG_A));
+				break;
+			case 8:
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_IR) & 0x0FFF);
+				setState(cpu, ST_EXECUTE);
+				break;
+			}
+		}
+		else if (getState(cpu) == ST_EXECUTE) {
+			switch (tick) {
+			//initial read?
+			case 3:
+				clrRegister(cpu, REG_A);
+				clrRegister(cpu, REG_MBR);
+				break;
+			case 7:
+				// TODO: Disable cpu when overflow: -2^15>sum>2^15-1
+				// TODO: OP_ADD
+				break;
+			case 8:
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+				setState(cpu, ST_FETCH);
+				break;
+			}
+		}
 		break;
 
 	case OP_XOR:
@@ -222,7 +282,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 				setRegister(cpu, REG_DSL, getRegister(cpu, REG_A) & 0x003F);
 				break;
 			case 7:
-				cpu->TRA = true;
+				setSwitch(cpu, SW_TRA, true);
 				break;
 			case 8:
 				setState(cpu, ST_EXECUTE);
@@ -232,12 +292,12 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		else if (getState(cpu) == ST_EXECUTE) {
 			switch (tick) {
 			case 6:
-				if (cpu->R == true) {
-					cpu->TRA = false;
+				if (getSwitch(cpu, SW_READY) == true) {
+					setSwitch(cpu, SW_TRA, false);
 				}
 				break;
 			case 8:
-				if (cpu->TRA == false) {
+				if (getSwitch(cpu, SW_TRA) == false) {
 					setState(cpu, ST_FETCH);
 					setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
 				}
@@ -296,7 +356,6 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		}
 		break;
 	default:
-		printf("Something really bad happened! You are in the default case!\n");
 		break;
 	}
 }
