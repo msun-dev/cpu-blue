@@ -21,9 +21,9 @@ typedef enum Register {
 	REG_IR  = 1, // current instruction
 	REG_MAR = 2, // Memory Address Register (adress to read)
 	REG_MBR = 3, // Memory Buffer Register (data from MAR)
-	REG_DIL = 4, // ?
-	REG_DOL = 5, // ?
-	REG_DSL = 6, // ?
+	REG_DIL = 4, // Input from a device
+	REG_DOL = 5, // Output to a device
+	REG_DSL = 6, // Device num?
 	REG_A   = 7, // accumulator A
 	REG_SR  = 8, // ?
 	REG_Z   = 9, // accumulator Z (unavailable to User)
@@ -31,17 +31,17 @@ typedef enum Register {
 
 typedef enum Instruction {
 	OP_HLT = 0x0,
-	OP_ADD = 0x1,//
-	OP_XOR = 0x2,//
-	OP_AND = 0x3,//
-	OP_IOR = 0x4,//
-	OP_NOT = 0x5,//
-	OP_LDA = 0x6,// Load Data to A
-	OP_STA = 0x7,// dump A to XXXX
+	OP_ADD = 0x1,
+	OP_XOR = 0x2,
+	OP_AND = 0x3,
+	OP_IOR = 0x4,
+	OP_NOT = 0x5,
+	OP_LDA = 0x6, // Load Data to A from XXXX
+	OP_STA = 0x7, // STore from A to XXXX
 	OP_SRJ = 0x8, // Sub Routine Jump
 	OP_JMA = 0x9, // if A sign == 1: jump to XXXX
 	OP_JMP = 0xA,
-	OP_INP = 0xB,//- 8 bits written to A from device **YY
+	OP_INP = 0xB, // 8 bits written to A from device **YY
 	OP_OUT = 0xC, // 8 bits of A sent to device **YY
 	OP_RAL = 0xD, // Accumulator rotation
 	OP_CSA = 0xE, // REG_switch -> A
@@ -49,9 +49,9 @@ typedef enum Instruction {
 } Instruction;
 
 typedef enum Switch {
-	SW_POWER = 0,
-	SW_READY = 1,
-	SW_TRA   = 2,
+	SW_POWER = 0, // "Is this thing on?"
+	SW_READY = 1, // Ready to read data from a device
+	SW_TRA   = 2, // Ready to transit data to a device
 } Switch;
 
 typedef struct BlueCpu_t {
