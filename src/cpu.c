@@ -4,8 +4,7 @@
 // TODO: Remove stdio (rewrite dump function)
 // TODO: Replace bool
 
-// User API
-/// Initialisation
+// Initialisation
 BlueCpu_t* initCpu() {
 	BlueCpu_t* cpu = NULL;
 	cpu = malloc(sizeof(BlueCpu_t));
@@ -39,33 +38,6 @@ uint8_t loadProgramm(BlueCpu_t* cpu, uint16_t adr,
 	return 0;
 }
 
-void deinitCpu(BlueCpu_t* cpu) {
-	free(cpu);
-}
-
-/// Switches
-void enableCpu(BlueCpu_t* cpu) {
-	setSwitch(cpu, SW_POWER, true);
-}
-
-void disableCpu (BlueCpu_t* cpu) {
-	setSwitch(cpu, SW_POWER, false);
-}
-
-/// Process
-uint8_t emulateCycle(BlueCpu_t* cpu) {
-	if (getSwitch(cpu, SW_POWER) == false) {
-		return 1;
-	}
-
-	uint8_t* clock_pulse = &(cpu->clock_pulse);
-	for (*clock_pulse = 1; *clock_pulse < PULSE_AMT + 1; *clock_pulse += 1)
-		processTick(cpu, *clock_pulse);
-	return 0;
-}
-
-// CPU logic
-/// Ready
 void clearRam(BlueCpu_t* cpu) {
 	for (uint32_t i = 0; i < RAM_LEN; cpu->ram[i++] = 0x0000);
 }
@@ -74,7 +46,11 @@ void clearRegisters(BlueCpu_t* cpu) {
 	for (uint32_t i = 0; i < REGS_LEN; setRegister(cpu, i++, 0x0000));
 }
 
-/// States
+void deinitCpu(BlueCpu_t* cpu) {
+	free(cpu);
+}
+
+// States
 void setState(BlueCpu_t* cpu, State s) {
 	cpu->state = s;
 }
@@ -83,13 +59,21 @@ State getState(BlueCpu_t* cpu) {
 	return cpu->state;
 }
 
-/// Switches
+// Switches
 void setSwitch(BlueCpu_t* cpu, Switch sw, bool value) {
 	cpu->status_switches[sw] = value;
 }
 
 Switch getSwitch(BlueCpu_t* cpu, Switch sw) {
 	return cpu->status_switches[sw];
+}
+
+void enableCpu(BlueCpu_t* cpu) {
+	setSwitch(cpu, SW_POWER, true);
+}
+
+void disableCpu (BlueCpu_t* cpu) {
+	setSwitch(cpu, SW_POWER, false);
 }
 
 /// Registers
@@ -109,6 +93,17 @@ void incRegister(BlueCpu_t* cpu, Register reg) {
 }
 
 /// Process
+uint8_t emulateCycle(BlueCpu_t* cpu) {
+	if (getSwitch(cpu, SW_POWER) == false) {
+		return 1;
+	}
+
+	uint8_t* clock_pulse = &(cpu->clock_pulse);
+	for (*clock_pulse = 1; *clock_pulse < PULSE_AMT + 1; *clock_pulse += 1)
+		processTick(cpu, *clock_pulse);
+	return 0;
+}
+
 void processTick(BlueCpu_t* cpu, uint8_t tick) {
 	switch (tick) {
 	case 1:
@@ -143,7 +138,7 @@ void processTick(BlueCpu_t* cpu, uint8_t tick) {
 	execInstruction(cpu, getInstruction(cpu), tick);
 }
 
-/// Instructions
+// Instructions
 uint8_t getInstruction(BlueCpu_t* cpu) {
 	return ((getRegister(cpu, REG_IR) & 0xF000) >> 12);
 }
@@ -353,7 +348,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 				clrRegister(cpu, REG_MBR);
 				break;
 			case 5:
-				setRegister(cpu, REG_A, getRegister(cpu, REG_MBR));
+				setRegister(cpu, REG_A, getRegister(cpu, REG_MBR) & 0x8FFF);
 				break;
 			case 8:
 				setState(cpu, ST_FETCH);

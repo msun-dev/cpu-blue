@@ -63,38 +63,31 @@ typedef struct BlueCpu_t {
 	bool     status_switches[SWITCHES_LEN];
 } BlueCpu_t;
 
-// User API
-/// Initialisation
-BlueCpu_t* initCpu      ();
-void       deinitCpu    (BlueCpu_t* cpu);
-void       loadProgramm (BlueCpu_t* cpu, uint16_t* programm, uint32_t size);
-/// Process
-uint8_t emulateCycle (BlueCpu_t* cpu);
-//// Switches
-void enableCpu  (BlueCpu_t* cpu);
-void disableCpu (BlueCpu_t* cpu);
-/// Debug
-void dumpRegisters (BlueCpu_t* cpu);
-void dumpMemory    (BlueCpu_t* cpu);
-
-// CPU logic
-/// Initialisation
-void clearRam       (BlueCpu_t* cpu);
-void clearRegisters (BlueCpu_t* cpu);
-/// States
+// Initialisation
+BlueCpu_t* initCpu        ();
+void       loadRam        (BlueCpu_t* cpu, uint16_t* ram);
+uint8_t    loadProgramm   (BlueCpu_t* cpu, uint16_t adr,
+                           uint16_t* programm, uint16_t size);
+void       clearRam       (BlueCpu_t* cpu);
+void       clearRegisters (BlueCpu_t* cpu);
+void       deinitCpu      (BlueCpu_t* cpu);
+// States
 void  setState (BlueCpu_t* cpu, State s);
 State getState (BlueCpu_t* cpu);
-/// Switches
-void   setSwitch (BlueCpu_t* cpu, Switch sw, bool value);
-Switch getSwitch (BlueCpu_t* cpu, Switch sw);
-/// Registers
+// Switches
+void   setSwitch  (BlueCpu_t* cpu, Switch sw, bool value);
+Switch getSwitch  (BlueCpu_t* cpu, Switch sw);
+void   enableCpu  (BlueCpu_t* cpu);
+void   disableCpu (BlueCpu_t* cpu);
+// Registers
 void     setRegister (BlueCpu_t* cpu, Register r, uint16_t value);
 uint16_t getRegister (BlueCpu_t* cpu, Register r);
 void     clrRegister (BlueCpu_t* cpu, Register r);
 void     incRegister (BlueCpu_t* cpu, Register r);
-/// Process
-void processTick    (BlueCpu_t* cpu, uint8_t tick);
-/// Instructions
+// Process
+uint8_t emulateCycle (BlueCpu_t* cpu);
+void    processTick  (BlueCpu_t* cpu, uint8_t tick);
+// Instructions
 uint8_t getInstruction  (BlueCpu_t* cpu);
 void    execInstruction (BlueCpu_t* cpu, Instruction instr, uint8_t tick);
 
