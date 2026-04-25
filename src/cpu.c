@@ -1,7 +1,5 @@
 #include "../include/cpu.h"
 
-// TODO: write leftover ops
-// TODO: implement switches
 // TODO: implement device interface
 // TODO: Remove stdio
 // TODO: Replace bool
@@ -443,16 +441,45 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		}
 		break;
 
-	case OP_INP: // Reading INPut from device
-		// A (XXYY): XX = 0x00, XX <- xx from YY device.
-		break;
-
-	case OP_OUT: // Sending OUTput to a device
+	case OP_INP:
+		// NB: both OP_INP and OP_OUT expected to not work
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
 			case 6:
-				setRegister(cpu, REG_DOL, getRegister(cpu, REG_A) >> 8 & 0xF000);
-				setRegister(cpu, REG_DSL, getRegister(cpu, REG_A) & 0x003F);
+				clrRegister(cpu, REG_A);
+				setRegister(cpu, REG_DSL, getRegister(cpu, REG_IR) & 0x001F);
+				break;
+			case 7:
+				setSwitch(cpu, SW_TRA, true);
+				break;
+			case 8:
+				setState(cpu, ST_EXECUTE);
+				break;
+			}
+		}
+		else if (getState(cpu) == ST_EXECUTE) {
+			switch (tick) {
+			case 6:
+				if (getSwitch(cpu, SW_READY) == true) {
+					setSwitch(cpu, SW_TRA, false);
+				}
+				break;
+			case 8:
+				if (getSwitch(cpu, SW_TRA) == false) {
+					setState(cpu, ST_FETCH);
+					setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+				}
+				break;
+			}
+		}
+		break;
+
+	case OP_OUT:
+		if (getState(cpu) == ST_FETCH) {
+			switch (tick) {
+			case 6:
+				setRegister(cpu, REG_DOL, getRegister(cpu, REG_A) & 0xFF00); // 15-8 REG_A
+				setRegister(cpu, REG_DSL, getRegister(cpu, REG_IR) & 0x003F); // 5-0 REG_A
 				break;
 			case 7:
 				setSwitch(cpu, SW_TRA, true);
