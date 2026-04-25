@@ -250,6 +250,37 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		break;
 
 	case OP_AND:
+		if (getState(cpu) == ST_FETCH) {
+			switch (tick) {
+			case 6:
+				clrRegister(cpu, REG_Z);
+				break;
+			case 7:
+				setRegister(cpu, REG_Z, getRegister(cpu, REG_A));
+				break;
+			case 8:
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_IR) & 0x0FFF);
+				setState(cpu, ST_EXECUTE);
+				break;
+			}
+		}
+		else if (getState(cpu) == ST_EXECUTE) {
+			switch (tick) {
+			//initial read?
+			case 3:
+				clrRegister(cpu, REG_A);
+				clrRegister(cpu, REG_MBR);
+				break;
+			case 7:
+				setRegister(cpu, REG_A,
+				            getRegister(cpu, REG_Z) & getRegister(cpu, REG_MBR));
+				break;
+			case 8:
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+				setState(cpu, ST_FETCH);
+				break;
+			}
+		}
 		break;
 
 	case OP_IOR:
