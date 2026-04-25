@@ -1,7 +1,7 @@
 #include "../include/cpu.h"
 
 // TODO: implement device interface
-// TODO: Remove stdio
+// TODO: Remove stdio (rewrite dump function)
 // TODO: Replace bool
 
 // User API
@@ -25,9 +25,18 @@ BlueCpu_t* initCpu() {
 	return cpu;
 }
 
-void loadProgramm(BlueCpu_t* cpu, uint16_t* programm, uint32_t size) {
+void loadRam(BlueCpu_t* cpu, uint16_t* ram) {
 	clearRam(cpu);
-	memcpy(cpu->ram, programm, size);
+	memcpy(cpu->ram, ram, RAM_LEN);
+}
+
+uint8_t loadProgramm(BlueCpu_t* cpu, uint16_t adr,
+                     uint16_t* programm, uint16_t size) {
+	clearRam(cpu);
+	if ((adr + size) > RAM_LEN)
+		return 1;
+	memcpy(cpu->ram + adr, programm, size);
+	return 0;
 }
 
 void deinitCpu(BlueCpu_t* cpu) {
@@ -53,25 +62,6 @@ uint8_t emulateCycle(BlueCpu_t* cpu) {
 	for (*clock_pulse = 1; *clock_pulse < PULSE_AMT + 1; *clock_pulse += 1)
 		processTick(cpu, *clock_pulse);
 	return 0;
-}
-
-/// Debug
-void dumpRegisters(BlueCpu_t* cpu) {
-	for (uint16_t i = 0; i < REGS_LEN; i++)
-		printf("%04X|", (i == REG_DSL || i == REG_DIL || i == REG_DOL)
-		                ? getRegister(cpu, i) & 0x00FF
-		                : getRegister(cpu, i)
-		);
-	putchar('\n');
-}
-
-void dumpMemory(BlueCpu_t* cpu) {
-	uint16_t ram_data = 0x0000;
-	for (uint32_t i = 0; i < RAM_LEN; i++) {
-		ram_data = cpu->ram[i];
-		if (ram_data != 0x0000)
-			printf("%d - 0x%4X\n", i, ram_data);
-	}
 }
 
 // CPU logic
@@ -129,11 +119,11 @@ void processTick(BlueCpu_t* cpu, uint8_t tick) {
 		break;
 	case 3:
 		if (getState(cpu) == ST_FETCH)
-			setRegister(cpu, REG_MBR, 0x0000);
+			clrRegister(cpu, REG_MBR);
 		break;
 	case 4:
 		if (getState(cpu) == ST_FETCH) {
-			setRegister(cpu, REG_IR, 0x0000);
+			clrRegister(cpu, REG_IR);
 			setRegister(cpu, REG_MBR, cpu->ram[getRegister(cpu, REG_MAR)]);
 		}
 		break;
