@@ -1,7 +1,7 @@
 # build script for lulz and lalz.
 # nothing fancy but many thing from here will be used in the makefile
 
-flags='-std=c11 -Wall -Wpedantic -Wextra -ggdb -g3 -O0 -fsanitize=address'
+flags='-std=c11 -Wall -Wpedantic -Wextra -ggdb -g3 -O0' # -fsanitize=address'
 
 rm -f ./bin/*
 rm -f ./build/*
