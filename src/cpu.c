@@ -350,9 +350,52 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		break;
 
 	case OP_LDA:
+		if (getState(cpu) == ST_FETCH) {
+			if (tick == 8) {
+				setState(cpu, ST_EXECUTE);
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_IR) & 0x8FFF);
+			}
+		}
+		else if (getState(cpu) == ST_EXECUTE) {
+			switch (tick) {
+			case 2:
+				clrRegister(cpu, REG_A);
+				break;
+			case 3:
+				clrRegister(cpu, REG_MBR);
+				break;
+			case 5:
+				setRegister(cpu, REG_A, getRegister(cpu, REG_MBR));
+				break;
+			case 8:
+				setState(cpu, ST_FETCH);
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+				break;
+			}
+		}
 		break;
 
 	case OP_STA:
+		if (getState(cpu) == ST_FETCH) {
+			if (tick == 8) {
+				setState(cpu, ST_EXECUTE);
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_IR) & 0x8FFF);
+			}
+		}
+		else if (getState(cpu) == ST_EXECUTE) {
+			switch (tick) {
+			case 4:
+				clrRegister(cpu, REG_MBR);
+				break;
+			case 5:
+				setRegister(cpu, REG_MBR, getRegister(cpu, REG_A));
+				break;
+			case 8:
+				setState(cpu, ST_FETCH);
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
+				break;
+			}
+		}
 		break;
 
 	case OP_SRJ:
