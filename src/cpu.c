@@ -294,7 +294,6 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 				break;
 			case 8:
 				setRegister(cpu, REG_MAR, getRegister(cpu, REG_IR) & 0x0FFF);
-				setState(cpu, ST_EXECUTE);
 				break;
 			}
 		}
