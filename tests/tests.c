@@ -2,38 +2,128 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 
+#define VERBOSE 1
+
+#define exit(x) printf("Exiting with the code %d\n", x); exit(x)
 #define ever(x) ;;
 #define lever(x) uint32_t i = 0; i < x; i++
 #define fever(x) ;false;
 
-uint16_t programm0[4] = {
+uint8_t test_programm(uint16_t p[], uint16_t ps, uint32_t cycles_to_emul,
+                      uint16_t expected_REG_A);
+void printRegs(BlueCpu_t*);
+void printRam(BlueCpu_t*);
+
+int test_ct = 0;
+
+uint16_t test_JMP[5] = {
 	0xF000,
 	0xF003,
 	0xF000,
 	0xF005,
+	0xA000,
+};
+
+uint16_t test_LDA[2] = {
+	0x6001, //0 LDA 001
+	0x000B, //1 data
+};
+
+uint16_t test_STA[5] = {
+	0x6001, //0 LDA 001
+	0x000F, //1 data
+	0x7003, //2 STA 003
+	0x0000, //3 data
+	0x0000, //4 LDA 003
+};
+
+uint16_t test_MATH[4] = {
+	0x6003, //0 LDA 003
+	0x1002, //1 ADD 002
+	0x7004, //2 STA 004
+	0x0001, //3
+};
+
+uint16_t test_ADD[6] = {
+	0x0001, //0 data
+	0x1000, //1 ADD 001
+	0x1000, //2 ADD 001
+	0x1000, //3 ADD 001
+	0x1000, //4 ADD 001
+	0x1000, //5 ADD 001
 };
 
 int main(void) {
-	BlueCpu_t* cpu = initCpu();
-	if (!cpu) {
-		printf("Malloc fail!\n");
-		exit(1);
-	}
-	printregs(cpu);
-	loadProgramm(cpu, programm0, 4 * sizeof(uint16_t));
-	printf("Memory:\n"); dumpMemory(cpu);
-
-	for (lever(5)) {
-		emulateCycle(cpu);
-		printregs(cpu);
-	}
-
-	exit(0);
+	//assert(test_programm(test_JMP, 5, 10, 0x0000) == 0);
+	assert(test_programm(test_LDA, 4, 5, 0x000B) == 0);
+	//assert(test_programm(test_STA, 5, 100, 0x0000) == 0);
+	//assert(test_programm(test_MATH, 4, 100, 0x0003) == 0);
+	assert(test_programm(test_ADD, 4, 100, 0x0005) == 0);
 }
 
-void printregs(BlueCpu_t* cpu) {
+uint8_t test_programm(uint16_t p[], uint16_t ps,
+                      uint32_t cycles_to_emul, uint16_t expected_REG_A) {
+	printf("\nTest #%d:\n", test_ct++);
+
+	BlueCpu_t* cpu = initCpu();
+	if (!cpu) {
+		printf("Malloc fail on CPU init.\n");
+		return 1;
+	}
+
+	if (loadProgramm(cpu, 0x0000, p, ps * sizeof(uint16_t))) {
+		printf("Size and address exceedes memory! Nothing written\n");
+		return 2;
+	}
+
+	enableCpu(cpu);
+		if (VERBOSE) {
+			printf(" - Post-initiation data: - \n");
+			printRegs(cpu);
+			printRam(cpu);
+		}
+	for (uint32_t i = 0; i < cycles_to_emul; i++) {
+		if (emulateCycle(cpu) == 1) {
+			break;
+		}
+		if (VERBOSE) {
+			printf(" - Post-cycle data: - \n");
+			printRegs(cpu);
+			printRam(cpu);
+		}
+	}
+
+	if (getRegister(cpu, REG_A) != expected_REG_A) {
+		printf("REG_A has value 0x%04X, was expecting 0x%04X\n",
+		       getRegister(cpu, REG_A), expected_REG_A);
+		return 3;
+	}
+
+	deinitCpu(cpu);
+
+	return 0;
+}
+
+void printRegs(BlueCpu_t* cpu) {
+	printf("Registers: \n");
 	printf("  PC|  IR| MAR| MBR| DIL| DOL| DSL|   A|  SR|   Z|\n");
-	dumpRegisters(cpu);
-	printf("-------------------------------------------------|\n");
+	for (uint8_t i = 0; i < REGS_LEN; i++) {
+		printf("%04X|", (i == REG_DSL || i == REG_DIL || i == REG_DOL)
+		                ? getRegister(cpu, i) & 0x00FF
+		                : getRegister(cpu, i)
+		);
+	}
+	putchar('\n');
+}
+
+void printRam(BlueCpu_t* cpu) {
+	printf("Non-zero memory: \n");
+	uint16_t ram_data = 0x0000;
+	for (uint32_t i = 0; i < RAM_LEN; i++) {
+		ram_data = cpu->ram[i];
+		if (ram_data != 0x0000)
+			printf("%d - 0x%04X\n", i, ram_data);
+	}
 }
