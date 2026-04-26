@@ -8,6 +8,8 @@ https://gecko05.github.io/2022/10/22/first-emulator-part1.html.
 If you want to use this emulator yourself - take a look at the ./tests/test.c
 file: usage example is in the test_programm function.
 
+?License: Do whatever you want.
+
 Things implemented:
 - CPU STRUCTure
 - CPU cycle
