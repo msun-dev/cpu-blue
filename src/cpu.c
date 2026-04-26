@@ -1,7 +1,6 @@
 #include "../include/cpu.h"
 
 // TODO: implement device interface
-// TODO: Remove stdio (rewrite dump function)
 // TODO: Replace bool
 
 // Initialisation
@@ -76,7 +75,7 @@ void disableCpu (BlueCpu_t* cpu) {
 	setSwitch(cpu, SW_POWER, false);
 }
 
-/// Registers
+// Registers
 void setRegister(BlueCpu_t* cpu, Register reg, uint16_t value) {
 	cpu->registers[reg] = value;
 }
@@ -92,7 +91,7 @@ void incRegister(BlueCpu_t* cpu, Register reg) {
 	setRegister(cpu, reg, getRegister(cpu, reg) + 1);
 }
 
-/// Process
+// Process
 uint8_t emulateCycle(BlueCpu_t* cpu) {
 	if (getSwitch(cpu, SW_POWER) == false) {
 		return 1;
