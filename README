@@ -1,2 +1,44 @@
-Copypaste of Blue CPU from https://gecko05.github.io/2022/10/22/first-emulator-part1.html, or, rather, from Caxton C. Foster's book *Computer Architecture* (1970) that I can't find.
-Some modifications applied.
+```
+Software emulator of BLUE CPU described in the Caxton C. Foster's
+Computer Architecture (1970) book.
+
+Based on the code from
+https://gecko05.github.io/2022/10/22/first-emulator-part1.html.
+
+If you want to use this emulator yourself - take a look at the ./tests/test.c
+file: usage example is in the test_programm function.
+
+Things implemented:
+- CPU STRUCTure
+- CPU cycle
+- Every opcode besides INP and OUT
+
+Left to implement/do:
+- INP, OUT commands (reason below)
+- Devices interface to communicate with CPU
+- Makefile and cross-platform compilation
+- Remove std from dependencies
+- Figure out why the fuck all tests are failing
+- Some kind of way to interact with the CPU (explained in the note below)
+
+Note (since too lazy to make a website):
+Really wanted to make my own CPU emulator before diving into something more
+complicated (CHIP-8, GB, i8080 (and the soviet counterpart), etc.).
+That article mentioned in the beginning was quite nice to start that journey
+(even tho it's one and only part). There were some mistakes and things
+I didn't like here and there so fixed them aswell.
+
+Also it's an attempt to create a standalone library, albiet unsuccessful.
+Like as I read somewhere I can use custom allocators for cpuInit function.
+I think it's not hard to do but i'll not do it for now.
+It sucks that if you define functions in the header you can't change
+their visibility using `static` afterwards. I think I just missing something.
+Will revisit this idea after I get some more experience. Wanted to make some kind
+of User API but failed miserably.
+
+Also as LE FUNNE I want to make it so you can run around this CPU in the 3D world.
+Let's say all of that implemented in the Raylib where you can in the real time
+see the data in the CPU and maybe jump right on top of it to corrupt data.
+
+See You soon!
+```
