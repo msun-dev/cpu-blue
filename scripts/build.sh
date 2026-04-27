@@ -8,7 +8,8 @@ flags='-std=c11 -Wall -Wpedantic -Wextra -ggdb -g3 -O0'
 
 rm -f ./bin/*
 rm -f ./build/*
-gcc $flags -c ./src/cpu.c -o ./build/cpu.o
-gcc $flags -c ./tests/tests.c -o ./build/tests.o
-gcc $flags ./build/cpu.o ./build/tests.o -o ./bin/test
 
+gcc $flags -c ./src/cpu.c -o ./build/cpu.o &&
+gcc $flags -c ./tests/tests.c -o ./build/tests.o &&
+gcc $flags ./build/cpu.o ./build/tests.o -o ./bin/test &&
+./bin/test
