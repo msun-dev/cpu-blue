@@ -29,15 +29,19 @@ Left to implement/do:
 - Some kind of way to interact with the CPU (explained in the note below)
 
 Commit description logic (or how do you even call this?):
-	Commits (latest) have 5 parts defined:
+	Commits (latest) have 2 parts defined:
+	1 - Title: 3 words about what commit accomplishes
+	2 - 5 points about changes (removed if empty):
 	- Added: Something added to a header files
 	- Implemented: Something implemented in the implementation files
 	- Fixed: Used to describe fixed bugs and other strange stuff
 	- Updated: Tells about small parts that were changed
 	- Removed: Something that was removed. FOREVER! (or temporarily)
+
 	All changes to a file written this way:
 		(ex: Added foo() in a and Removed bar() in a and fixed barf() bug in b)
 		```
+		Insane Commit Title
 		Added:
 		- a: added foo()
 		Removed:
@@ -45,7 +49,6 @@ Commit description logic (or how do you even call this?):
 		Fixed:
 		- b: fixed bug in barf() (most retarded explanation goes here)
 		```
-	If nothing were Updated/Added/etc. these parts are ommited.
 
 Note (since too lazy to make a website):
 	Really wanted to make my own CPU emulator before diving into something more
