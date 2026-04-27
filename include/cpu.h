@@ -1,8 +1,7 @@
 #pragma once
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#include <string.h> // memcpy
+#include <stdlib.h> // malloc
 
 #define PULSE_AMT 8
 #define RAM_LEN 4096
@@ -12,6 +11,11 @@
 #define uint8_t  unsigned char
 #define uint16_t unsigned short int
 #define uint32_t unsigned int
+
+typedef enum Bool { // NB: Care with cond statements, can fail!
+	False = 0,
+	True  = !False,
+} Bool;
 
 typedef enum State {
 	ST_EXECUTE,
@@ -62,7 +66,7 @@ typedef struct BlueCpu_t {
 
 	uint16_t ram[RAM_LEN];
 	uint16_t registers[REGS_LEN];
-	bool     status_switches[SWITCHES_LEN];
+	Bool     status_switches[SWITCHES_LEN];
 } BlueCpu_t;
 
 // Initialisation
@@ -80,10 +84,10 @@ void    incClockpulse (BlueCpu_t* cpu);
 void  setState (BlueCpu_t* cpu, State s);
 State getState (BlueCpu_t* cpu);
 // Switches
-void   setSwitch  (BlueCpu_t* cpu, Switch sw, bool value);
-Switch getSwitch  (BlueCpu_t* cpu, Switch sw);
-void   enableCpu  (BlueCpu_t* cpu);
-void   disableCpu (BlueCpu_t* cpu);
+void setSwitch  (BlueCpu_t* cpu, Switch sw, Bool value);
+Bool getSwitch  (BlueCpu_t* cpu, Switch sw);
+void enableCpu  (BlueCpu_t* cpu);
+void disableCpu (BlueCpu_t* cpu);
 // Registers
 void     setRegister (BlueCpu_t* cpu, Register r, uint16_t value);
 uint16_t getRegister (BlueCpu_t* cpu, Register r);

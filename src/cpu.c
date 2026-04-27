@@ -1,8 +1,5 @@
 #include "../include/cpu.h"
 
-// TODO: implement device interface
-// TODO: Replace bool
-
 // Initialisation
 BlueCpu_t* initCpu() {
 	BlueCpu_t* cpu = NULL;
@@ -16,9 +13,9 @@ BlueCpu_t* initCpu() {
 	setState(cpu, ST_FETCH);
 	clearRam(cpu);
 	clearRegisters(cpu);
-	setSwitch(cpu, SW_POWER, false);
-	setSwitch(cpu, SW_READY, false);
-	setSwitch(cpu, SW_TRA, false);
+	setSwitch(cpu, SW_POWER, False);
+	setSwitch(cpu, SW_READY, False);
+	setSwitch(cpu, SW_TRA, False);
 
 	return cpu;
 }
@@ -71,20 +68,20 @@ void incClockpulse (BlueCpu_t* cpu) {
 	cpu->clock_pulse++;
 }
 
-void setSwitch(BlueCpu_t* cpu, Switch sw, bool value) {
+void setSwitch(BlueCpu_t* cpu, Switch sw, Bool value) {
 	cpu->status_switches[sw] = value;
 }
 
-Switch getSwitch(BlueCpu_t* cpu, Switch sw) {
+Bool getSwitch(BlueCpu_t* cpu, Switch sw) {
 	return cpu->status_switches[sw];
 }
 
 void enableCpu(BlueCpu_t* cpu) {
-	setSwitch(cpu, SW_POWER, true);
+	setSwitch(cpu, SW_POWER, True);
 }
 
 void disableCpu (BlueCpu_t* cpu) {
-	setSwitch(cpu, SW_POWER, false);
+	setSwitch(cpu, SW_POWER, False);
 }
 
 // Registers
@@ -105,7 +102,7 @@ void incRegister(BlueCpu_t* cpu, Register reg) {
 
 // Process
 uint8_t emulateCycle(BlueCpu_t* cpu) {
-	if (getSwitch(cpu, SW_POWER) == false) {
+	if (getSwitch(cpu, SW_POWER) == False) {
 		return 1;
 	}
 
@@ -162,7 +159,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 	case OP_HLT:
 		switch (tick) {
 		case 7:
-			setSwitch(cpu, SW_POWER, false);
+			setSwitch(cpu, SW_POWER, False);
 			break;
 		case 8:
 			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
@@ -201,11 +198,11 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 				if ((getRegister(cpu, REG_Z) & 0x8000)
 				    && (getRegister(cpu, REG_MBR) & 0x8000)
 				    && !(result & 0x8000))
-					setSwitch(cpu, SW_POWER, false);
+					setSwitch(cpu, SW_POWER, False);
 				else if (!(getRegister(cpu, REG_Z) & 0x8000)
 				         && !(getRegister(cpu, REG_MBR) & 0x8000)
 				         && (result & 0x8000))
-					setSwitch(cpu, SW_POWER, false);
+					setSwitch(cpu, SW_POWER, False);
 				setRegister(cpu, REG_A, (uint16_t)result);
 				break;
 			case 8:
@@ -417,11 +414,11 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 	case OP_JMA:
 		switch (tick) {
 			case 6:
-				if ((getRegister(cpu, REG_A) & 0x8000)) // NB
+				if ((getRegister(cpu, REG_A) & 0x8000)) // NB: Can be wrong
 					clrRegister(cpu, REG_PC);
 				break;
 			case 7:
-				if ((getRegister(cpu, REG_A) & 0x8000)) // NB
+				if ((getRegister(cpu, REG_A) & 0x8000)) // NB: Can be wrong
 					setRegister(cpu, REG_PC, getRegister(cpu, REG_IR) & 0x0FFF);
 				break;
 			case 8:
@@ -453,7 +450,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 				setRegister(cpu, REG_DSL, getRegister(cpu, REG_IR) & 0x001F);
 				break;
 			case 7:
-				setSwitch(cpu, SW_TRA, true);
+				setSwitch(cpu, SW_TRA, True);
 				break;
 			case 8:
 				setState(cpu, ST_EXECUTE);
@@ -463,12 +460,12 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		else if (getState(cpu) == ST_EXECUTE) {
 			switch (tick) {
 			case 6:
-				if (getSwitch(cpu, SW_READY) == true) {
-					setSwitch(cpu, SW_TRA, false);
+				if (getSwitch(cpu, SW_READY) == True) {
+					setSwitch(cpu, SW_TRA, False);
 				}
 				break;
 			case 8:
-				if (getSwitch(cpu, SW_TRA) == false) {
+				if (getSwitch(cpu, SW_TRA) == False) {
 					setState(cpu, ST_FETCH);
 					setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
 				}
@@ -485,7 +482,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 				setRegister(cpu, REG_DSL, getRegister(cpu, REG_IR) & 0x003F); // 5-0 REG_A
 				break;
 			case 7:
-				setSwitch(cpu, SW_TRA, true);
+				setSwitch(cpu, SW_TRA, True);
 				break;
 			case 8:
 				setState(cpu, ST_EXECUTE);
@@ -495,12 +492,12 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 		else if (getState(cpu) == ST_EXECUTE) {
 			switch (tick) {
 			case 6:
-				if (getSwitch(cpu, SW_READY) == true) {
-					setSwitch(cpu, SW_TRA, false);
+				if (getSwitch(cpu, SW_READY) == True) {
+					setSwitch(cpu, SW_TRA, False);
 				}
 				break;
 			case 8:
-				if (getSwitch(cpu, SW_TRA) == false) {
+				if (getSwitch(cpu, SW_TRA) == False) {
 					setState(cpu, ST_FETCH);
 					setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
 				}
