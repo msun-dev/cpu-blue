@@ -13,20 +13,22 @@ so don't use this emulator yet.
 	Don't forget to take a look at NB comments: `grep -rn "// NB: "`
 if something fails unexpectedly. You can find some info in them.
 
-?License: Do whatever you want.
-
 Things implemented:
 - CPU STRUCTure
 - CPU cycle
 - Every opcode besides INP and OUT
+- Does not uses standart library (am I a cool guy?)
 
 Left to implement/do:
 - INP, OUT commands (reason below)
 - Devices interface to communicate with CPU
-- Makefile and cross-platform compilation
-- Remove std from dependencies
 - Figure out why the fuck all tests are failing
 - Some kind of way to interact with the CPU (explained in the note below)
+
+?License: Do whatever you want.
+
+How to contribute: "Do You really want to do it?". But on the serious note: file
+an issue or something, we can discuss what's up there.
 
 Commit description logic (or how do you even call this?):
 	Commits (latest) have 2 parts defined:
@@ -59,11 +61,15 @@ I didn't like here and there so fixed them aswell.
 
 	Also it's an attempt to create a standalone library, albiet unsuccessful.
 Like as I read somewhere I can use custom allocators for cpuInit function.
-I think it's not hard to do but i'll not do it for now.
+I think it's not hard to do but i'll not do it for now. UPD: Done and done.
+wasn't that hard but don't know yet if all things implemented will not explode
+one day.
 	It sucks that if you define functions in the header you can't change
 their visibility using `static` afterwards. I think I just missing something.
 Will revisit this idea after I get some more experience. Wanted to make some
-kind of User API but failed miserably.
+kind of User API and hide inner functions (wanna see them in the header
+uncommented and make compiler to keep track if something implemented or not)
+but failed miserably.
 
 	And I kinda succeeded in the project structure. Kinda okayish.
 	And this way of writing README is waaaaaay better than that shit github has.
