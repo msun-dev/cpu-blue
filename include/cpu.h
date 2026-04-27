@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string.h> // memcpy
 #include <stdlib.h> // malloc
 
 #define PULSE_AMT 8
@@ -11,6 +10,7 @@
 #define uint8_t  unsigned char
 #define uint16_t unsigned short int
 #define uint32_t unsigned int
+#define size_t   uint32_t
 
 typedef enum Bool { // NB: Care with cond statements, can fail!
 	False = 0,

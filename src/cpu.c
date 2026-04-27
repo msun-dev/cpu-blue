@@ -1,5 +1,13 @@
 #include "../include/cpu.h"
 
+// Secret functions
+static void memcopy(uint16_t* dest, const uint16_t* src, size_t size) {
+	// NB: uint16_t size for pointers. May fail if other types provided
+	for (size_t i = 0; i < size; ++i) {
+		dest[i] = src[i];
+	}
+}
+
 // Initialisation
 BlueCpu_t* initCpu() {
 	BlueCpu_t* cpu = NULL;
@@ -22,7 +30,7 @@ BlueCpu_t* initCpu() {
 
 void loadRam(BlueCpu_t* cpu, uint16_t* ram) {
 	clearRam(cpu);
-	memcpy(cpu->ram, ram, RAM_LEN);
+	memcopy(cpu->ram, ram, RAM_LEN);
 }
 
 uint8_t loadProgramm(BlueCpu_t* cpu, uint16_t adr,
@@ -30,7 +38,7 @@ uint8_t loadProgramm(BlueCpu_t* cpu, uint16_t adr,
 	clearRam(cpu);
 	if ((adr + size) > RAM_LEN)
 		return 1;
-	memcpy(cpu->ram + adr, programm, size);
+	memcopy(cpu->ram + adr, programm, size);
 	return 0;
 }
 
@@ -96,6 +104,7 @@ uint16_t getRegister(BlueCpu_t* cpu, Register reg) {
 void clrRegister(BlueCpu_t* cpu, Register reg) {
 	setRegister(cpu, reg, 0x0000);
 }
+
 void incRegister(BlueCpu_t* cpu, Register reg) {
 	setRegister(cpu, reg, getRegister(cpu, reg) + 1);
 }
@@ -156,7 +165,7 @@ uint8_t getInstruction(BlueCpu_t* cpu) {
 }
 
 void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
-	uint8_t cur_instr = getInstruction(cpu),
+	uint8_t cur_instr = getInstruction(cpu);
 	switch (cur_instr) {
 	case OP_HLT:
 		switch (tick) {
