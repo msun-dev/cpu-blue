@@ -1,3 +1,5 @@
+BLUE CPU Software Emulator
+
 	Software emulator of BLUE CPU described in the Caxton C. Foster's
 Computer Architecture (1970) book.
 
@@ -6,7 +8,10 @@ https://gecko05.github.io/2022/10/22/first-emulator-part1.html.
 
 	If you want to use this emulator yourself - take a look at the ./tests/test.c
 file: usage example is in the test_programm function. But it kinda doesn't work
-so don't use that yet.
+so don't use this emulator yet.
+
+	Don't forget to take a look at NB comments: `grep -rn "// NB: "`
+if something fails unexpectedly. You can find some info in them.
 
 ?License: Do whatever you want.
 
@@ -22,6 +27,25 @@ Left to implement/do:
 - Remove std from dependencies
 - Figure out why the fuck all tests are failing
 - Some kind of way to interact with the CPU (explained in the note below)
+
+Commit description logic (or how do you even call this?):
+	Commits (latest) have 5 parts defined:
+	- Added: Something added to a header files
+	- Implemented: Something implemented in the implementation files
+	- Fixed: Used to describe fixed bugs and other strange stuff
+	- Updated: Tells about small parts that were changed
+	- Removed: Something that was removed. FOREVER! (or temporarily)
+	All changes to a file written this way:
+		(ex: Added foo() in a and Removed bar() in a and fixed barf() bug in b)
+		```
+		Added:
+		- a: added foo()
+		Removed:
+		- a: removed bar()
+		Fixed:
+		- b: fixed bug in barf() (most retarded explanation goes here)
+		```
+	If nothing were Updated/Added/etc. these parts are ommited.
 
 Note (since too lazy to make a website):
 	Really wanted to make my own CPU emulator before diving into something more
