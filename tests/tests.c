@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <assert.h>
 
 #define VERBOSE 1
 
@@ -17,6 +16,16 @@ void printRegs(BlueCpu_t*);
 void printRam(BlueCpu_t*);
 
 int test_ct = 0;
+int test_cf = 0;
+
+uint16_t test_data[6] = {
+	0xF000,
+	0xF003,
+	0xF000,
+	0xF003,
+	0x0000,
+	0x1001,
+};
 
 uint16_t test_JMP[5] = {
 	0xF000,
@@ -47,20 +56,26 @@ uint16_t test_MATH[4] = {
 };
 
 uint16_t test_ADD[6] = {
-	0x0001, //0 data
-	0x1000, //1 ADD 001
-	0x1000, //2 ADD 001
-	0x1000, //3 ADD 001
+	0x1005, //1 ADD 001
+	0x1001, //2 ADD 001
+	0x1001, //3 ADD 001
 	0x1000, //4 ADD 001
 	0x1000, //5 ADD 001
+	0x0001, //6 data
 };
 
 int main(void) {
-	//assert(test_programm(test_JMP, 5, 10, 0x0000) == 0);
-	assert(test_programm(test_LDA, 4, 5, 0x000B) == 0);
-	//assert(test_programm(test_STA, 5, 100, 0x0000) == 0);
-	//assert(test_programm(test_MATH, 4, 100, 0x0003) == 0);
-	assert(test_programm(test_ADD, 4, 100, 0x0005) == 0);
+	//test_programm(test_data, 6, 10, 0x0000);
+	//test_programm(test_JMP, 5, 10, 0x0000));
+	//test_programm(test_LDA, 4, 5, 0x000B);
+	//test_programm(test_STA, 5, 100, 0x0000));
+	//test_programm(test_MATH, 4, 100, 0x0003));
+	test_programm(test_ADD, 6, 100, 0x0007);
+
+	printf("+---\n- Tests executed: %d\n- Tests failed: %d\n+---\n",
+	       test_ct, test_cf);
+
+	return (test_cf == 0) ? 0: test_cf;
 }
 
 uint8_t test_programm(uint16_t p[], uint16_t ps,
@@ -98,6 +113,7 @@ uint8_t test_programm(uint16_t p[], uint16_t ps,
 	if (getRegister(cpu, REG_A) != expected_REG_A) {
 		printf("REG_A has value 0x%04X, was expecting 0x%04X\n",
 		       getRegister(cpu, REG_A), expected_REG_A);
+		test_cf++;
 		return 3;
 	}
 

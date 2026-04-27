@@ -12,7 +12,7 @@ BlueCpu_t* initCpu() {
 		return NULL;
 	}
 
-	cpu->clock_pulse = 0;
+	setClockpulse(cpu, 1);
 	setState(cpu, ST_FETCH);
 	clearRam(cpu);
 	clearRegisters(cpu);
@@ -58,7 +58,19 @@ State getState(BlueCpu_t* cpu) {
 	return cpu->state;
 }
 
-// Switches
+// General data
+void setClockpulse (BlueCpu_t* cpu, uint8_t value) {
+	cpu->clock_pulse = value;
+}
+
+uint8_t getClockpulse (BlueCpu_t* cpu) {
+	return cpu->clock_pulse;
+}
+
+void incClockpulse (BlueCpu_t* cpu) {
+	cpu->clock_pulse++;
+}
+
 void setSwitch(BlueCpu_t* cpu, Switch sw, bool value) {
 	cpu->status_switches[sw] = value;
 }
@@ -97,14 +109,17 @@ uint8_t emulateCycle(BlueCpu_t* cpu) {
 		return 1;
 	}
 
-	uint8_t* clock_pulse = &(cpu->clock_pulse);
-	for (*clock_pulse = 1; *clock_pulse < PULSE_AMT + 1; *clock_pulse += 1)
-		processTick(cpu, *clock_pulse);
+	for (setClockpulse(cpu, 1);
+	     getClockpulse(cpu) < PULSE_AMT + 1;
+	     incClockpulse(cpu)) {
+		processTick(cpu);
+	}
+
 	return 0;
 }
 
-void processTick(BlueCpu_t* cpu, uint8_t tick) {
-	switch (tick) {
+void processTick(BlueCpu_t* cpu) {
+	switch (getClockpulse(cpu)) {
 	case 1:
 		break;
 	case 2:
@@ -134,7 +149,7 @@ void processTick(BlueCpu_t* cpu, uint8_t tick) {
 	default:
 		break;
 	}
-	execInstruction(cpu, getInstruction(cpu), tick);
+	execInstruction(cpu, getInstruction(cpu), getClockpulse(cpu));
 }
 
 // Instructions
@@ -165,6 +180,7 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 				setRegister(cpu, REG_Z, getRegister(cpu, REG_A));
 				break;
 			case 8:
+				// loading data (12 bits) from IR (was MBR) to MAR
 				setRegister(cpu, REG_MAR, getRegister(cpu, REG_IR) & 0x0FFF);
 				setState(cpu, ST_EXECUTE);
 				break;
@@ -176,6 +192,9 @@ void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
 			case 3:
 				clrRegister(cpu, REG_A);
 				clrRegister(cpu, REG_MBR);
+				break;
+			case 4:
+				setRegister(cpu, REG_MBR, getRegister(cpu, REG_MAR));
 				break;
 			case 7:;
 				uint32_t result = getRegister(cpu, REG_Z) + getRegister(cpu, REG_MBR);

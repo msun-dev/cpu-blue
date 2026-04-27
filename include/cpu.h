@@ -50,7 +50,7 @@ typedef enum Instruction {
 typedef enum Switch {
 	SW_POWER = 0, // "Is this thing on?"
 	SW_READY = 1, // Ready to read data from a device
-	SW_TRA   = 2, // Ready to transit data to a device
+	SW_TRA   = 2, // Data transfer in progress
 } Switch;
 
 typedef struct BlueCpu_t {
@@ -70,7 +70,10 @@ uint8_t    loadProgramm   (BlueCpu_t* cpu, uint16_t adr,
 void       clearRam       (BlueCpu_t* cpu);
 void       clearRegisters (BlueCpu_t* cpu);
 void       deinitCpu      (BlueCpu_t* cpu);
-// States
+// General data
+void    setClockpulse (BlueCpu_t* cpu, uint8_t value);
+uint8_t getClockpulse (BlueCpu_t* cpu);
+void    incClockpulse (BlueCpu_t* cpu);
 void  setState (BlueCpu_t* cpu, State s);
 State getState (BlueCpu_t* cpu);
 // Switches
@@ -85,7 +88,7 @@ void     clrRegister (BlueCpu_t* cpu, Register r);
 void     incRegister (BlueCpu_t* cpu, Register r);
 // Process
 uint8_t emulateCycle (BlueCpu_t* cpu);
-void    processTick  (BlueCpu_t* cpu, uint8_t tick);
+void    processTick  (BlueCpu_t* cpu);
 // Instructions
 uint8_t getInstruction  (BlueCpu_t* cpu);
 void    execInstruction (BlueCpu_t* cpu, Instruction instr, uint8_t tick);
