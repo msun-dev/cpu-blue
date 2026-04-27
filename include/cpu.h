@@ -98,5 +98,5 @@ uint8_t emulateCycle (BlueCpu_t* cpu);
 void    processTick  (BlueCpu_t* cpu);
 // Instructions
 uint8_t getInstruction  (BlueCpu_t* cpu);
-void    execInstruction (BlueCpu_t* cpu, Instruction instr, uint8_t tick);
+void    execInstruction (BlueCpu_t* cpu, uint8_t tick);
 

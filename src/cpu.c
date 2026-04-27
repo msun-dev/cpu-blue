@@ -116,7 +116,8 @@ uint8_t emulateCycle(BlueCpu_t* cpu) {
 }
 
 void processTick(BlueCpu_t* cpu) {
-	switch (getClockpulse(cpu)) {
+	uint16_t clock_pulse = getClockpulse(cpu);
+	switch (clock_pulse) {
 	case 1:
 		break;
 	case 2:
@@ -146,7 +147,7 @@ void processTick(BlueCpu_t* cpu) {
 	default:
 		break;
 	}
-	execInstruction(cpu, getInstruction(cpu), getClockpulse(cpu));
+	execInstruction(cpu, clock_pulse);
 }
 
 // Instructions
@@ -154,8 +155,9 @@ uint8_t getInstruction(BlueCpu_t* cpu) {
 	return ((getRegister(cpu, REG_IR) & 0xF000) >> 12);
 }
 
-void execInstruction(BlueCpu_t* cpu, Instruction instr, uint8_t tick) {
-	switch (instr) {
+void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
+	uint8_t cur_instr = getInstruction(cpu),
+	switch (cur_instr) {
 	case OP_HLT:
 		switch (tick) {
 		case 7:
