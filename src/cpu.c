@@ -1,19 +1,19 @@
 #include "../include/cpu.h"
 
 // Secret functions
-static void memcopy(uint16_t* dest, const uint16_t* src, size_t size) {
-	// NB: uint16_t size for pointers. May fail if other types provided
-	for (size_t i = 0; i < size; ++i) {
+static void memcopy(ui16_t* dest, const ui16_t* src, s_t size) {
+	// NB: ui16_t size for pointers. May fail if other types provided
+	for (s_t i = 0; i < size; ++i) {
 		dest[i] = src[i];
 	}
 }
 
-// Initialisation
-BlueCpu_t* initCpu() {
+BlueCpu_t* initCpu(AllocFunc_t allocFunc, FreeFunc_t freeFunc) {
+	// NB: For now only tested agains malloc
 	BlueCpu_t* cpu = NULL;
-	cpu = malloc(sizeof(BlueCpu_t));
+	cpu = (BlueCpu_t*)allocFunc(sizeof(BlueCpu_t));
 	if (!cpu) {
-		free(cpu);
+		freeFunc(cpu);
 		return NULL;
 	}
 
@@ -28,13 +28,13 @@ BlueCpu_t* initCpu() {
 	return cpu;
 }
 
-void loadRam(BlueCpu_t* cpu, uint16_t* ram) {
+void loadRam(BlueCpu_t* cpu, ui16_t* ram) {
 	clearRam(cpu);
 	memcopy(cpu->ram, ram, RAM_LEN);
 }
 
-uint8_t loadProgramm(BlueCpu_t* cpu, uint16_t adr,
-                     uint16_t* programm, uint16_t size) {
+ui8_t loadProgramm(BlueCpu_t* cpu, ui16_t adr,
+                     ui16_t* programm, ui16_t size) {
 	clearRam(cpu);
 	if ((adr + size) > RAM_LEN)
 		return 1;
@@ -43,15 +43,15 @@ uint8_t loadProgramm(BlueCpu_t* cpu, uint16_t adr,
 }
 
 void clearRam(BlueCpu_t* cpu) {
-	for (uint32_t i = 0; i < RAM_LEN; cpu->ram[i++] = 0x0000);
+	for (ui32_t i = 0; i < RAM_LEN; cpu->ram[i++] = 0x0000);
 }
 
 void clearRegisters(BlueCpu_t* cpu) {
-	for (uint32_t i = 0; i < REGS_LEN; setRegister(cpu, i++, 0x0000));
+	for (ui32_t i = 0; i < REGS_LEN; setRegister(cpu, i++, 0x0000));
 }
 
-void deinitCpu(BlueCpu_t* cpu) {
-	free(cpu);
+void deinitCpu(BlueCpu_t* cpu, FreeFunc_t freeFunc) {
+	freeFunc(cpu);
 }
 
 // States
@@ -64,11 +64,11 @@ State getState(BlueCpu_t* cpu) {
 }
 
 // General data
-void setClockpulse (BlueCpu_t* cpu, uint8_t value) {
+void setClockpulse (BlueCpu_t* cpu, ui8_t value) {
 	cpu->clock_pulse = value;
 }
 
-uint8_t getClockpulse (BlueCpu_t* cpu) {
+ui8_t getClockpulse (BlueCpu_t* cpu) {
 	return cpu->clock_pulse;
 }
 
@@ -93,11 +93,11 @@ void disableCpu (BlueCpu_t* cpu) {
 }
 
 // Registers
-void setRegister(BlueCpu_t* cpu, Register reg, uint16_t value) {
+void setRegister(BlueCpu_t* cpu, Register reg, ui16_t value) {
 	cpu->registers[reg] = value;
 }
 
-uint16_t getRegister(BlueCpu_t* cpu, Register reg) {
+ui16_t getRegister(BlueCpu_t* cpu, Register reg) {
 	return cpu->registers[reg];
 }
 
@@ -110,7 +110,7 @@ void incRegister(BlueCpu_t* cpu, Register reg) {
 }
 
 // Process
-uint8_t emulateCycle(BlueCpu_t* cpu) {
+ui8_t emulateCycle(BlueCpu_t* cpu) {
 	if (getSwitch(cpu, SW_POWER) == False) {
 		return 1;
 	}
@@ -125,7 +125,7 @@ uint8_t emulateCycle(BlueCpu_t* cpu) {
 }
 
 void processTick(BlueCpu_t* cpu) {
-	uint16_t clock_pulse = getClockpulse(cpu);
+	ui16_t clock_pulse = getClockpulse(cpu);
 	switch (clock_pulse) {
 	case 1:
 		break;
@@ -160,12 +160,12 @@ void processTick(BlueCpu_t* cpu) {
 }
 
 // Instructions
-uint8_t getInstruction(BlueCpu_t* cpu) {
+ui8_t getInstruction(BlueCpu_t* cpu) {
 	return ((getRegister(cpu, REG_IR) & 0xF000) >> 12);
 }
 
-void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
-	uint8_t cur_instr = getInstruction(cpu);
+void execInstruction(BlueCpu_t* cpu, ui8_t tick) {
+	ui8_t cur_instr = getInstruction(cpu);
 	switch (cur_instr) {
 	case OP_HLT:
 		switch (tick) {
@@ -205,7 +205,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 				setRegister(cpu, REG_MBR, getRegister(cpu, REG_MAR));
 				break;
 			case 7:;
-				uint32_t result = getRegister(cpu, REG_Z) + getRegister(cpu, REG_MBR);
+				ui32_t result = getRegister(cpu, REG_Z) + getRegister(cpu, REG_MBR);
 				if ((getRegister(cpu, REG_Z) & 0x8000)
 				    && (getRegister(cpu, REG_MBR) & 0x8000)
 				    && !(result & 0x8000))
@@ -214,7 +214,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 				         && !(getRegister(cpu, REG_MBR) & 0x8000)
 				         && (result & 0x8000))
 					setSwitch(cpu, SW_POWER, False);
-				setRegister(cpu, REG_A, (uint16_t)result);
+				setRegister(cpu, REG_A, (ui16_t)result);
 				break;
 			case 8:
 				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));

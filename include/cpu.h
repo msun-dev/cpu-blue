@@ -1,16 +1,18 @@
 #pragma once
 
-#include <stdlib.h> // malloc
-
 #define PULSE_AMT 8
 #define RAM_LEN 4096
 #define REGS_LEN 10
 #define SWITCHES_LEN 3
 
-#define uint8_t  unsigned char
-#define uint16_t unsigned short int
-#define uint32_t unsigned int
-#define size_t   uint32_t
+#define NULL   0
+#define ui8_t  unsigned char
+#define ui16_t unsigned short int
+#define ui32_t unsigned int
+#define s_t    ui32_t
+
+typedef void* (*AllocFunc_t)(s_t size); // user-provided alloc
+typedef void  (*FreeFunc_t)(void* ptr); // user-provided free
 
 typedef enum Bool { // NB: Care with cond statements, can fail!
 	False = 0,
@@ -61,25 +63,25 @@ typedef enum Switch {
 } Switch;
 
 typedef struct BlueCpu_t {
-	uint8_t clock_pulse;
+	ui8_t clock_pulse;
 	State   state;
 
-	uint16_t ram[RAM_LEN];
-	uint16_t registers[REGS_LEN];
+	ui16_t ram[RAM_LEN];
+	ui16_t registers[REGS_LEN];
 	Bool     status_switches[SWITCHES_LEN];
 } BlueCpu_t;
 
 // Initialisation
-BlueCpu_t* initCpu        ();
-void       loadRam        (BlueCpu_t* cpu, uint16_t* ram);
-uint8_t    loadProgramm   (BlueCpu_t* cpu, uint16_t adr,
-                           uint16_t* programm, uint16_t size);
+BlueCpu_t* initCpu        (AllocFunc_t alloc_func, FreeFunc_t free_func);
+void       loadRam        (BlueCpu_t* cpu, ui16_t* ram);
+ui8_t    loadProgramm   (BlueCpu_t* cpu, ui16_t adr,
+                           ui16_t* programm, ui16_t size);
 void       clearRam       (BlueCpu_t* cpu);
 void       clearRegisters (BlueCpu_t* cpu);
-void       deinitCpu      (BlueCpu_t* cpu);
+void       deinitCpu      (BlueCpu_t* cpu, FreeFunc_t free_func);
 // General data
-void    setClockpulse (BlueCpu_t* cpu, uint8_t value);
-uint8_t getClockpulse (BlueCpu_t* cpu);
+void    setClockpulse (BlueCpu_t* cpu, ui8_t value);
+ui8_t getClockpulse (BlueCpu_t* cpu);
 void    incClockpulse (BlueCpu_t* cpu);
 void  setState (BlueCpu_t* cpu, State s);
 State getState (BlueCpu_t* cpu);
@@ -89,14 +91,14 @@ Bool getSwitch  (BlueCpu_t* cpu, Switch sw);
 void enableCpu  (BlueCpu_t* cpu);
 void disableCpu (BlueCpu_t* cpu);
 // Registers
-void     setRegister (BlueCpu_t* cpu, Register r, uint16_t value);
-uint16_t getRegister (BlueCpu_t* cpu, Register r);
+void     setRegister (BlueCpu_t* cpu, Register r, ui16_t value);
+ui16_t getRegister (BlueCpu_t* cpu, Register r);
 void     clrRegister (BlueCpu_t* cpu, Register r);
 void     incRegister (BlueCpu_t* cpu, Register r);
 // Process
-uint8_t emulateCycle (BlueCpu_t* cpu);
+ui8_t emulateCycle (BlueCpu_t* cpu);
 void    processTick  (BlueCpu_t* cpu);
 // Instructions
-uint8_t getInstruction  (BlueCpu_t* cpu);
-void    execInstruction (BlueCpu_t* cpu, uint8_t tick);
+ui8_t getInstruction  (BlueCpu_t* cpu);
+void    execInstruction (BlueCpu_t* cpu, ui8_t tick);
 

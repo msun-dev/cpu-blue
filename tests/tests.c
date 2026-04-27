@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define VERBOSE 1
 
@@ -82,7 +83,7 @@ uint8_t test_programm(uint16_t p[], uint16_t ps,
                       uint32_t cycles_to_emul, uint16_t expected_REG_A) {
 	printf("\nTest #%d:\n", test_ct++);
 
-	BlueCpu_t* cpu = initCpu();
+	BlueCpu_t* cpu = initCpu(malloc, free);
 	if (!cpu) {
 		printf("Malloc fail on CPU init.\n");
 		return 1;
@@ -117,7 +118,7 @@ uint8_t test_programm(uint16_t p[], uint16_t ps,
 		return 3;
 	}
 
-	deinitCpu(cpu);
+	deinitCpu(cpu, free);
 
 	return 0;
 }
