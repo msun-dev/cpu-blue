@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -9,6 +8,10 @@
 #define RAM_LEN 4096
 #define REGS_LEN 10
 #define SWITCHES_LEN 3
+
+#define uint8_t  unsigned char
+#define uint16_t unsigned short int
+#define uint32_t unsigned int
 
 typedef enum State {
 	ST_EXECUTE,
