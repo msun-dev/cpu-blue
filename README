@@ -7,7 +7,7 @@ Computer Architecture (1970) book.
 https://gecko05.github.io/2022/10/22/first-emulator-part1.html.
 
 	If you want to use this emulator yourself - take a look at the ./tests/test.c
-file: usage example is in the test_programm function. But it kinda doesn't work
+file: usage example is in the test_program function. But it kinda doesn't work
 so don't use this emulator yet.
 
 	Don't forget to take a look at NB comments: `grep -rn "// NB: "`
@@ -22,7 +22,8 @@ Things implemented:
 Left to implement/do:
 - INP, OUT commands (reason below)
 - Devices interface to communicate with CPU
-- Figure out why the fuck all tests are failing
+- Use most of the cpu operations in test program
+- Overflow detection without uint32
 - Some kind of way to interact with the CPU (explained in the note below)
 
 ?License: Do whatever you want.
