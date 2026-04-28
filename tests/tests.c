@@ -11,7 +11,7 @@
 #define lever(x) uint32_t i = 0; i < x; i++
 #define fever(x) ;false;
 
-uint8_t test_programm(uint16_t p[], uint16_t ps, uint32_t cycles_to_emul,
+uint8_t test_program(uint16_t p[], uint16_t ps, uint32_t cycles_to_emul,
                       uint16_t expected_REG_A);
 void printRegs(BlueCpu_t*);
 void printRam(BlueCpu_t*);
@@ -57,21 +57,21 @@ uint16_t test_MATH[4] = {
 };
 
 uint16_t test_ADD[6] = {
-	0x1005, //1 ADD 001
-	0x1001, //2 ADD 001
-	0x1001, //3 ADD 001
-	0x1000, //4 ADD 001
-	0x1000, //5 ADD 001
-	0x0001, //6 data
+	0x1005, //0 | ADD 005 | A = 0001
+	0x1001, //1 | ADD 001 | A = 0001 + 1001 = 1002
+	0x1001, //2 | ADD 001 | A = 1002 + 1001 = 2003
+	0x1000, //3 | ADD 000 | A = 2003 + 1005 = 3008
+	0x1000, //4 | ADD 000 | A = 3008 + 1005 = 400D
+	0x0001, //5 |  data   |
 };
 
 int main(void) {
-	//test_programm(test_data, 6, 10, 0x0000);
-	//test_programm(test_JMP, 5, 10, 0x0000));
-	//test_programm(test_LDA, 4, 5, 0x000B);
-	//test_programm(test_STA, 5, 100, 0x0000));
-	//test_programm(test_MATH, 4, 100, 0x0003));
-	test_programm(test_ADD, 6, 100, 0x0007);
+	//test_program(test_data, 6, 10, 0x0000);
+	//test_program(test_JMP, 5, 10, 0x0000));
+	//test_program(test_LDA, 4, 5, 0x000B);
+	//test_program(test_STA, 5, 100, 0x0000));
+	//test_program(test_MATH, 4, 100, 0x0003));
+	test_program(test_ADD, 6, 100, 0x400D);
 
 	printf("+---\n- Tests executed: %d\n- Tests failed: %d\n+---\n",
 	       test_ct, test_cf);
@@ -79,7 +79,7 @@ int main(void) {
 	return (test_cf == 0) ? 0: test_cf;
 }
 
-uint8_t test_programm(uint16_t p[], uint16_t ps,
+uint8_t test_program(uint16_t p[], uint16_t ps,
                       uint32_t cycles_to_emul, uint16_t expected_REG_A) {
 	printf("\nTest #%d:\n", test_ct++);
 
@@ -89,7 +89,7 @@ uint8_t test_programm(uint16_t p[], uint16_t ps,
 		return 1;
 	}
 
-	if (loadProgramm(cpu, 0x0000, p, ps * sizeof(uint16_t))) {
+	if (loadProgram(cpu, 0x0000, p, ps * sizeof(uint16_t))) {
 		printf("Size and address exceedes memory! Nothing written\n");
 		return 2;
 	}

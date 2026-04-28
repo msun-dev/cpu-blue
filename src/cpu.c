@@ -228,7 +228,9 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 				clrRegister(cpu, REG_MBR);
 				break;
 			case 4:
-				setRegister(cpu, REG_MBR, getRegister(cpu, REG_MAR));
+				setRegister(cpu,
+				            REG_MBR,
+				            getRamCell(cpu, getRegister(cpu, REG_MAR)));
 				break;
 			case 7:;
 				uint32_t result = getRegister(cpu, REG_Z) + getRegister(cpu, REG_MBR);
