@@ -17,6 +17,7 @@ static ui8_t detectOverflow(ui16_t Z, ui16_t MBR) {
 	return 0;
 }
 
+// Initialisation
 BlueCpu_t* initCpu(AllocFunc_t allocFunc, FreeFunc_t freeFunc) {
 	// NB: For now only tested agains malloc
 	BlueCpu_t* cpu = NULL;
@@ -37,39 +38,8 @@ BlueCpu_t* initCpu(AllocFunc_t allocFunc, FreeFunc_t freeFunc) {
 	return cpu;
 }
 
-void loadRam(BlueCpu_t* cpu, ui16_t* ram) {
-	clearRam(cpu);
-	memcopy(cpu->ram, ram, RAM_LEN);
-}
-
-ui8_t loadProgramm(BlueCpu_t* cpu, ui16_t adr,
-                     ui16_t* programm, ui16_t size) {
-	clearRam(cpu);
-	if ((adr + size) > RAM_LEN)
-		return 1;
-	memcopy(cpu->ram + adr, programm, size);
-	return 0;
-}
-
-void clearRam(BlueCpu_t* cpu) {
-	for (ui32_t i = 0; i < RAM_LEN; cpu->ram[i++] = 0x0000);
-}
-
-void clearRegisters(BlueCpu_t* cpu) {
-	for (ui32_t i = 0; i < REGS_LEN; setRegister(cpu, i++, 0x0000));
-}
-
 void deinitCpu(BlueCpu_t* cpu, FreeFunc_t freeFunc) {
 	freeFunc(cpu);
-}
-
-// States
-void setState(BlueCpu_t* cpu, State s) {
-	cpu->state = s;
-}
-
-State getState(BlueCpu_t* cpu) {
-	return cpu->state;
 }
 
 // General data
@@ -85,6 +55,47 @@ void incClockpulse (BlueCpu_t* cpu) {
 	cpu->clock_pulse++;
 }
 
+void setState(BlueCpu_t* cpu, State s) {
+	cpu->state = s;
+}
+
+State getState(BlueCpu_t* cpu) {
+	return cpu->state;
+}
+
+// Ram
+void setRamCell(BlueCpu_t* cpu, ui16_t addr, ui16_t value) {
+	if (addr > RAM_LEN)
+		return;
+	cpu->ram[addr] = value;
+}
+
+ui16_t getRamCell(BlueCpu_t* cpu, ui16_t addr) {
+	if (addr > RAM_LEN) {
+		disableCpu(cpu); // Yeah, just like that. Say thanks i'm not nuking your root
+		return 0x0000;
+	}
+	return cpu->ram[addr];
+}
+
+void clearRam(BlueCpu_t* cpu) {
+	for (ui32_t i = 0; i < RAM_LEN; setRamCell(cpu, i++, 0x0000));
+}
+
+void loadRam(BlueCpu_t* cpu, ui16_t* ram) {
+	clearRam(cpu);
+	memcopy(cpu->ram, ram, RAM_LEN);
+}
+
+ui8_t loadProgram(BlueCpu_t* cpu, ui16_t adr, ui16_t* program, ui16_t size) {
+	clearRam(cpu);
+	if ((adr + size) > RAM_LEN)
+		return 1;
+	memcopy(cpu->ram + adr, program, size);
+	return 0;
+}
+
+// Switches
 void setSwitch(BlueCpu_t* cpu, Switch sw, Bool value) {
 	cpu->status_switches[sw] = value;
 }
@@ -112,6 +123,10 @@ ui16_t getRegister(BlueCpu_t* cpu, Register reg) {
 
 void clrRegister(BlueCpu_t* cpu, Register reg) {
 	setRegister(cpu, reg, 0x0000);
+}
+
+void clearRegisters(BlueCpu_t* cpu) {
+	for (ui32_t i = 0; i < REGS_LEN; clrRegister(cpu, i++));
 }
 
 void incRegister(BlueCpu_t* cpu, Register reg) {
@@ -150,7 +165,7 @@ void processTick(BlueCpu_t* cpu) {
 	case 4:
 		if (getState(cpu) == ST_FETCH) {
 			clrRegister(cpu, REG_IR);
-			setRegister(cpu, REG_MBR, cpu->ram[getRegister(cpu, REG_MAR)]);
+			setRegister(cpu, REG_MBR, getRamCell(cpu, getRegister(cpu, REG_MAR)));
 		}
 		break;
 	case 5:

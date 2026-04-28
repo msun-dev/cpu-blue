@@ -72,33 +72,35 @@ typedef struct BlueCpu_t {
 } BlueCpu_t;
 
 // Initialisation
-BlueCpu_t* initCpu        (AllocFunc_t alloc_func, FreeFunc_t free_func);
-void       loadRam        (BlueCpu_t* cpu, ui16_t* ram);
-ui8_t    loadProgramm   (BlueCpu_t* cpu, ui16_t adr,
-                           ui16_t* programm, ui16_t size);
-void       clearRam       (BlueCpu_t* cpu);
-void       clearRegisters (BlueCpu_t* cpu);
-void       deinitCpu      (BlueCpu_t* cpu, FreeFunc_t free_func);
+BlueCpu_t* initCpu   (AllocFunc_t alloc_func, FreeFunc_t free_func);
+void       deinitCpu (BlueCpu_t* cpu, FreeFunc_t free_func);
 // General data
-void    setClockpulse (BlueCpu_t* cpu, ui8_t value);
+void  setClockpulse (BlueCpu_t* cpu, ui8_t value);
 ui8_t getClockpulse (BlueCpu_t* cpu);
-void    incClockpulse (BlueCpu_t* cpu);
+void  incClockpulse (BlueCpu_t* cpu);
 void  setState (BlueCpu_t* cpu, State s);
 State getState (BlueCpu_t* cpu);
+// Ram
+void   setRamCell  (BlueCpu_t* cpu, ui16_t addr, ui16_t value);
+ui16_t getRamCell  (BlueCpu_t* cpu, ui16_t addr);
+void   clearRam    (BlueCpu_t* cpu);
+void   loadRam     (BlueCpu_t* cpu, ui16_t* ram);
+ui8_t  loadProgram (BlueCpu_t* cpu, ui16_t adr, ui16_t* program, ui16_t size);
 // Switches
 void setSwitch  (BlueCpu_t* cpu, Switch sw, Bool value);
 Bool getSwitch  (BlueCpu_t* cpu, Switch sw);
 void enableCpu  (BlueCpu_t* cpu);
 void disableCpu (BlueCpu_t* cpu);
 // Registers
-void     setRegister (BlueCpu_t* cpu, Register r, ui16_t value);
+void   setRegister (BlueCpu_t* cpu, Register r, ui16_t value);
 ui16_t getRegister (BlueCpu_t* cpu, Register r);
-void     clrRegister (BlueCpu_t* cpu, Register r);
-void     incRegister (BlueCpu_t* cpu, Register r);
+void   clrRegister (BlueCpu_t* cpu, Register r);
+void   clearRegisters (BlueCpu_t* cpu);
+void   incRegister (BlueCpu_t* cpu, Register r);
 // Process
 ui8_t emulateCycle (BlueCpu_t* cpu);
-void    processTick  (BlueCpu_t* cpu);
+void  processTick  (BlueCpu_t* cpu);
 // Instructions
 ui8_t getInstruction  (BlueCpu_t* cpu);
-void    execInstruction (BlueCpu_t* cpu, ui8_t tick);
+void  execInstruction (BlueCpu_t* cpu, ui8_t tick);
 
