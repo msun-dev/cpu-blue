@@ -5,7 +5,7 @@
 #define REGS_LEN 10
 #define SWITCHES_LEN 3
 
-#define NULL   0
+#define NULL ((void*) 0)
 
 typedef unsigned char      uint8_t;
 typedef unsigned short int uint16_t;
