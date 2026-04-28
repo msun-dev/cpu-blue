@@ -8,6 +8,15 @@ static void memcopy(ui16_t* dest, const ui16_t* src, s_t size) {
 	}
 }
 
+static ui8_t detectOverflow(ui16_t Z, ui16_t MBR) {
+	ui32_t result = Z + MBR;
+	if ((Z & 0x8000) && (MBR & 0x8000) && !(result & 0x8000))
+		return 1;
+	else if (!(Z & 0x8000) && !(MBR & 0x8000) && (result & 0x8000))
+		return 2;
+	return 0;
+}
+
 BlueCpu_t* initCpu(AllocFunc_t allocFunc, FreeFunc_t freeFunc) {
 	// NB: For now only tested agains malloc
 	BlueCpu_t* cpu = NULL;
@@ -126,6 +135,7 @@ ui8_t emulateCycle(BlueCpu_t* cpu) {
 
 void processTick(BlueCpu_t* cpu) {
 	ui16_t clock_pulse = getClockpulse(cpu);
+	// Move if state here
 	switch (clock_pulse) {
 	case 1:
 		break;
@@ -206,14 +216,12 @@ void execInstruction(BlueCpu_t* cpu, ui8_t tick) {
 				break;
 			case 7:;
 				ui32_t result = getRegister(cpu, REG_Z) + getRegister(cpu, REG_MBR);
-				if ((getRegister(cpu, REG_Z) & 0x8000)
-				    && (getRegister(cpu, REG_MBR) & 0x8000)
-				    && !(result & 0x8000))
+				if (detectOverflow(
+				      getRegister(cpu, REG_Z),
+				      getRegister(cpu, REG_MBR)
+				  ) != 0) {
 					setSwitch(cpu, SW_POWER, False);
-				else if (!(getRegister(cpu, REG_Z) & 0x8000)
-				         && !(getRegister(cpu, REG_MBR) & 0x8000)
-				         && (result & 0x8000))
-					setSwitch(cpu, SW_POWER, False);
+				}
 				setRegister(cpu, REG_A, (ui16_t)result);
 				break;
 			case 8:
