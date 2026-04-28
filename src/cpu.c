@@ -1,15 +1,15 @@
 #include "../include/cpu.h"
 
 // Secret functions
-static void memcopy(ui16_t* dest, const ui16_t* src, s_t size) {
-	// NB: ui16_t size for pointers. May fail if other types provided
-	for (s_t i = 0; i < size; ++i) {
+static void memcopy(uint16_t* dest, const uint16_t* src, uint16_t size) {
+	// NB: uint16_t size for pointers. May fail if other types provided
+	for (uint16_t i = 0; i < size; ++i) {
 		dest[i] = src[i];
 	}
 }
 
-static ui8_t detectOverflow(ui16_t Z, ui16_t MBR) {
-	ui32_t result = Z + MBR;
+static uint8_t detectOverflow(uint16_t Z, uint16_t MBR) {
+	uint32_t result = Z + MBR;
 	if ((Z & 0x8000) && (MBR & 0x8000) && !(result & 0x8000))
 		return 1;
 	else if (!(Z & 0x8000) && !(MBR & 0x8000) && (result & 0x8000))
@@ -43,11 +43,11 @@ void deinitCpu(BlueCpu_t* cpu, FreeFunc_t freeFunc) {
 }
 
 // General data
-void setClockpulse (BlueCpu_t* cpu, ui8_t value) {
+void setClockpulse (BlueCpu_t* cpu, uint8_t value) {
 	cpu->clock_pulse = value;
 }
 
-ui8_t getClockpulse (BlueCpu_t* cpu) {
+uint8_t getClockpulse (BlueCpu_t* cpu) {
 	return cpu->clock_pulse;
 }
 
@@ -64,13 +64,13 @@ State getState(BlueCpu_t* cpu) {
 }
 
 // Ram
-void setRamCell(BlueCpu_t* cpu, ui16_t addr, ui16_t value) {
+void setRamCell(BlueCpu_t* cpu, uint16_t addr, uint16_t value) {
 	if (addr > RAM_LEN)
 		return;
 	cpu->ram[addr] = value;
 }
 
-ui16_t getRamCell(BlueCpu_t* cpu, ui16_t addr) {
+uint16_t getRamCell(BlueCpu_t* cpu, uint16_t addr) {
 	if (addr > RAM_LEN) {
 		disableCpu(cpu); // Yeah, just like that. Say thanks i'm not nuking your root
 		return 0x0000;
@@ -79,15 +79,16 @@ ui16_t getRamCell(BlueCpu_t* cpu, ui16_t addr) {
 }
 
 void clearRam(BlueCpu_t* cpu) {
-	for (ui32_t i = 0; i < RAM_LEN; setRamCell(cpu, i++, 0x0000));
+	for (uint32_t i = 0; i < RAM_LEN; setRamCell(cpu, i++, 0x0000));
 }
 
-void loadRam(BlueCpu_t* cpu, ui16_t* ram) {
+void loadRam(BlueCpu_t* cpu, uint16_t* ram) {
 	clearRam(cpu);
 	memcopy(cpu->ram, ram, RAM_LEN);
 }
 
-ui8_t loadProgram(BlueCpu_t* cpu, ui16_t adr, ui16_t* program, ui16_t size) {
+uint8_t loadProgram(BlueCpu_t* cpu, uint16_t adr,
+                    uint16_t* program, uint16_t size) {
 	clearRam(cpu);
 	if ((adr + size) > RAM_LEN)
 		return 1;
@@ -113,11 +114,11 @@ void disableCpu (BlueCpu_t* cpu) {
 }
 
 // Registers
-void setRegister(BlueCpu_t* cpu, Register reg, ui16_t value) {
+void setRegister(BlueCpu_t* cpu, Register reg, uint16_t value) {
 	cpu->registers[reg] = value;
 }
 
-ui16_t getRegister(BlueCpu_t* cpu, Register reg) {
+uint16_t getRegister(BlueCpu_t* cpu, Register reg) {
 	return cpu->registers[reg];
 }
 
@@ -126,7 +127,7 @@ void clrRegister(BlueCpu_t* cpu, Register reg) {
 }
 
 void clearRegisters(BlueCpu_t* cpu) {
-	for (ui32_t i = 0; i < REGS_LEN; clrRegister(cpu, i++));
+	for (uint32_t i = 0; i < REGS_LEN; clrRegister(cpu, i++));
 }
 
 void incRegister(BlueCpu_t* cpu, Register reg) {
@@ -134,7 +135,7 @@ void incRegister(BlueCpu_t* cpu, Register reg) {
 }
 
 // Process
-ui8_t emulateCycle(BlueCpu_t* cpu) {
+uint8_t emulateCycle(BlueCpu_t* cpu) {
 	if (getSwitch(cpu, SW_POWER) == False) {
 		return 1;
 	}
@@ -149,7 +150,7 @@ ui8_t emulateCycle(BlueCpu_t* cpu) {
 }
 
 void processTick(BlueCpu_t* cpu) {
-	ui16_t clock_pulse = getClockpulse(cpu);
+	uint16_t clock_pulse = getClockpulse(cpu);
 	// Move if state here
 	switch (clock_pulse) {
 	case 1:
@@ -185,12 +186,12 @@ void processTick(BlueCpu_t* cpu) {
 }
 
 // Instructions
-ui8_t getInstruction(BlueCpu_t* cpu) {
+uint8_t getInstruction(BlueCpu_t* cpu) {
 	return ((getRegister(cpu, REG_IR) & 0xF000) >> 12);
 }
 
-void execInstruction(BlueCpu_t* cpu, ui8_t tick) {
-	ui8_t cur_instr = getInstruction(cpu);
+void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
+	uint8_t cur_instr = getInstruction(cpu);
 	switch (cur_instr) {
 	case OP_HLT:
 		switch (tick) {
@@ -230,14 +231,14 @@ void execInstruction(BlueCpu_t* cpu, ui8_t tick) {
 				setRegister(cpu, REG_MBR, getRegister(cpu, REG_MAR));
 				break;
 			case 7:;
-				ui32_t result = getRegister(cpu, REG_Z) + getRegister(cpu, REG_MBR);
+				uint32_t result = getRegister(cpu, REG_Z) + getRegister(cpu, REG_MBR);
 				if (detectOverflow(
 				      getRegister(cpu, REG_Z),
 				      getRegister(cpu, REG_MBR)
 				  ) != 0) {
 					setSwitch(cpu, SW_POWER, False);
 				}
-				setRegister(cpu, REG_A, (ui16_t)result);
+				setRegister(cpu, REG_A, (uint16_t)result);
 				break;
 			case 8:
 				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
