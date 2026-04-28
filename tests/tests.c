@@ -6,10 +6,7 @@
 
 #define VERBOSE 1
 
-#define exit(x) printf("Exiting with the code %d\n", x); exit(x)
-#define ever(x) ;;
-#define lever(x) uint32_t i = 0; i < x; i++
-#define fever(x) ;false;
+#define SIZE(x) sizeof(x) / sizeof(uint16_t)
 
 uint8_t test_program(uint16_t p[], uint16_t ps, uint32_t cycles_to_emul,
                       uint16_t expected_REG_A);
@@ -19,87 +16,70 @@ void printRam(BlueCpu_t*);
 int test_ct = 0;
 int test_cf = 0;
 
-uint16_t test_data[6] = {
-	0xF000,
-	0xF003,
-	0xF000,
-	0xF003,
-	0x0000,
-	0x1001,
-};
-
-uint16_t test_JMP[5] = {
-	0xF000,
-	0xF003,
-	0xF000,
-	0xF005,
-	0xA000,
-};
-
-uint16_t test_LDA[2] = {
-	0x6001, //0 LDA 001
-	0x000B, //1 data
-};
-
-uint16_t test_STA[5] = {
-	0x6001, //0 LDA 001
-	0x000F, //1 data
-	0x7003, //2 STA 003
-	0x0000, //3 data
-	0x0000, //4 LDA 003
-};
-
-uint16_t test_MATH[4] = {
-	0x6003, //0 LDA 003
-	0x1002, //1 ADD 002
-	0x7004, //2 STA 004
-	0x0001, //3
-};
-
 uint16_t test_ADD[6] = {
-	0x1005, //0 | ADD 005 | A = 0001
-	0x1001, //1 | ADD 001 | A = 0001 + 1001 = 1002
-	0x1001, //2 | ADD 001 | A = 1002 + 1001 = 2003
-	0x1000, //3 | ADD 000 | A = 2003 + 1005 = 3008
-	0x1000, //4 | ADD 000 | A = 3008 + 1005 = 400D
-	0x0001, //5 |  data   |
+// CODE   addr  ASM OP   Cycles  Registers state
+	0x1005, //0 | ADD 005 | 2     | A = 0001
+	0x1001, //1 | ADD 001 | 4     | A = 0001 + 1001 = 1002
+	0x1001, //2 | ADD 001 | 6     | A = 1002 + 1001 = 2003
+	0x1000, //3 | ADD 000 | 8     | A = 2003 + 1005 = 3008
+	0x1000, //4 | ADD 000 | 10    | A = 3008 + 1005 = >400D<
+	0x0001, //5 |  data   |       |
+};
+
+uint16_t test_JMP[6] = {
+// CODE   addr  ASM OP   Cycles  Registers state
+	0xF000, //0 | NOP xxx | 1     |
+	0xF000, //1 | NOP xxx | 2     |
+	0xF005, //2 | NOP xxx | 3     |
+	0xA005, //3 | JMP 005 | 4     |
+	0x0000, //4 | HLT xxx |       |
+	0x1000, //5 | ADD 000 | 6     | A = F000
 };
 
 int main(void) {
-	//test_program(test_data, 6, 10, 0x0000);
-	//test_program(test_JMP, 5, 10, 0x0000));
-	//test_program(test_LDA, 4, 5, 0x000B);
-	//test_program(test_STA, 5, 100, 0x0000));
-	//test_program(test_MATH, 4, 100, 0x0003));
-	test_program(test_ADD, 6, 100, 0x400D);
+	test_program(test_ADD, SIZE(test_ADD), 10, 0x400D);
+	test_program(test_JMP, SIZE(test_JMP),  6, 0xF000);
 
-	printf("+---\n- Tests executed: %d\n- Tests failed: %d\n+---\n",
+	printf("+---\n- Tests executed: %d\n- Tests failed: %d\n",
 	       test_ct, test_cf);
+	if (test_cf == 0)
+		printf("- All tests passed!\n");
+	printf("+---\n");
 
 	return (test_cf == 0) ? 0: test_cf;
 }
 
 uint8_t test_program(uint16_t p[], uint16_t ps,
-                      uint32_t cycles_to_emul, uint16_t expected_REG_A) {
+                     uint32_t cycles_to_emul, uint16_t expected_REG_A) {
 	printf("\nTest #%d:\n", test_ct++);
 
+	// Initialising CPU. Don't forgt to provide malloc and free functions
+	// In this case they are used from stdlib
 	BlueCpu_t* cpu = initCpu(malloc, free);
 	if (!cpu) {
 		printf("Malloc fail on CPU init.\n");
 		return 1;
 	}
 
-	if (loadProgram(cpu, 0x0000, p, ps * sizeof(uint16_t))) {
+	// Way of loading the program. Only one for the moment.
+	// First define uint16_t array of opcodes
+	// After that use loadProgram(which cpu, starting address
+	//                            program pointer, program size)
+	// Care with the size beccause inner memcpy will yoink data after the array
+	if (loadProgram(cpu, 0x0000, p, ps)) {
 		printf("Size and address exceedes memory! Nothing written\n");
 		return 2;
 	}
 
+	// Enabling CPU with enableCpu
 	enableCpu(cpu);
-		if (VERBOSE) {
-			printf(" - Post-initiation data: - \n");
-			printRegs(cpu);
-			printRam(cpu);
-		}
+	if (VERBOSE) {
+		printf(" - Post-initiation data: - \n");
+		printRegs(cpu);
+		printRam(cpu);
+	}
+	
+	// Emulating cycle by calling emulateCycle
 	for (uint32_t i = 0; i < cycles_to_emul; i++) {
 		if (emulateCycle(cpu) == 1) {
 			break;
@@ -111,6 +91,7 @@ uint8_t test_program(uint16_t p[], uint16_t ps,
 		}
 	}
 
+	// Comparing register A for testing purposes
 	if (getRegister(cpu, REG_A) != expected_REG_A) {
 		printf("REG_A has value 0x%04X, was expecting 0x%04X\n",
 		       getRegister(cpu, REG_A), expected_REG_A);
@@ -118,6 +99,7 @@ uint8_t test_program(uint16_t p[], uint16_t ps,
 		return 3;
 	}
 
+	printf("Test passed! Deinitialising cpu.\n");
 	deinitCpu(cpu, free);
 
 	return 0;
