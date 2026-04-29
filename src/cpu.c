@@ -65,9 +65,7 @@ State getState(BlueCpu_t* cpu) {
 
 // Ram
 void setRamCell(BlueCpu_t* cpu, uint16_t addr, uint16_t value) {
-	if (addr > RAM_LEN)
-		return;
-	cpu->ram[addr] = value;
+	cpu->ram[addr & 0x0FFF] = value;
 }
 
 uint16_t getRamCell(BlueCpu_t* cpu, uint16_t addr) {
@@ -388,7 +386,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		if (getState(cpu) == ST_FETCH) {
 			if (tick == 8) {
 				setState(cpu, ST_EXECUTE);
-				setRegister(cpu, REG_MAR, getRegister(cpu, REG_IR) & 0x8FFF);
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_IR) & 0x0FFF);
 			}
 		}
 		else if (getState(cpu) == ST_EXECUTE) {
@@ -400,7 +398,9 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 				clrRegister(cpu, REG_MBR);
 				break;
 			case 5:
-				setRegister(cpu, REG_A, getRegister(cpu, REG_MBR) & 0x8FFF);
+				uint16_t ramonmar = getRamCell(cpu, getRegister(cpu, REG_MAR));
+				setRegister(cpu, REG_MBR, ramonmar);
+				setRegister(cpu, REG_A,   ramonmar);
 				break;
 			case 8:
 				setState(cpu, ST_FETCH);
@@ -414,7 +414,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		if (getState(cpu) == ST_FETCH) {
 			if (tick == 8) {
 				setState(cpu, ST_EXECUTE);
-				setRegister(cpu, REG_MAR, getRegister(cpu, REG_IR) & 0x8FFF);
+				setRegister(cpu, REG_MAR, getRegister(cpu, REG_IR) & 0x0FFF);
 			}
 		}
 		else if (getState(cpu) == ST_EXECUTE) {
@@ -424,6 +424,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 				break;
 			case 5:
 				setRegister(cpu, REG_MBR, getRegister(cpu, REG_A));
+				setRamCell(cpu, getRegister(cpu, REG_MAR), getRegister(cpu, REG_MBR));
 				break;
 			case 8:
 				setState(cpu, ST_FETCH);
