@@ -10,7 +10,8 @@
 typedef unsigned char      uint8_t;
 typedef unsigned short int uint16_t;
 typedef unsigned int       uint32_t;
-typedef void* (*AllocFunc_t)(uint16_t size); // user-provided alloc
+typedef unsigned long int  uint64_t;
+typedef void* (*AllocFunc_t)(uint64_t size); // user-provided alloc
 typedef void  (*FreeFunc_t)(void* ptr);      // user-provided free
 
 typedef enum Bool { // NB: Care with cond statements, can fail!
