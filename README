@@ -8,7 +8,8 @@ https://gecko05.github.io/2022/10/22/first-emulator-part1.html.
 
 	If you want to use this emulator yourself - take a look at the ./tests/test.c
 file: usage example is in the test_program function. But it kinda doesn't work
-so don't use this emulator yet.
+so don't use this emulator yet. DON'T USE IT, IT DOESN'T WORK AS INTENDED.
+YOU HEAR ME?????
 
 	Don't forget to take a look at NB comments: `grep -rn "// NB: "`
 if something fails unexpectedly. You can find some info in them.
@@ -82,5 +83,8 @@ world. Let's say all of that implemented in the Raylib where you can in the real
 time see the data in the CPU and maybe jump right on top of it to corrupt data.
 Maybe some time in the future as the separate project... And also this,
 and also th...
+
+	Speaking of std: its nice to make a draft of an app (saves a lot of time)
+and then as time goes on swap parts of std to your own implementation.
 
 See You soon!
