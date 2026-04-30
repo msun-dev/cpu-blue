@@ -1,5 +1,10 @@
 #include "../include/cpu.h"
 
+// TODO: Add more checks to loadprogram. Or have a typedef for a program, maybe
+
+#define EXP(x)  (x & 0x7FFF)
+#define SIGN(x) (x & 0x8000) // 1 = negative
+
 // Secret functions
 static void memcopy(uint16_t* dest, const uint16_t* src, uint16_t size) {
 	// NB: uint16_t size for pointers. May fail if other types provided
@@ -8,7 +13,18 @@ static void memcopy(uint16_t* dest, const uint16_t* src, uint16_t size) {
 	}
 }
 
-static uint8_t detectOverflow(uint16_t Z, uint16_t MBR) {
+static Bool detectOverflow(uint16_t Z, uint16_t MBR) {
+	// if same sign
+	
+	// if (!(EXP(Z) | EXP(MBR)) == 0) { // all bits flipped
+	//  if excessive bits
+	//   return True; positive overflow
+	// }
+	// else if {
+	//  
+	// }
+	//
+
 	uint32_t result = Z + MBR;
 	if ((Z & 0x8000) && (MBR & 0x8000) && !(result & 0x8000))
 		return 1;
@@ -26,7 +42,7 @@ BlueCpu_t* initCpu(AllocFunc_t allocFunc, FreeFunc_t freeFunc) {
 		freeFunc(cpu);
 		return NULL;
 	}
-
+	
 	setClockpulse(cpu, 1);
 	setState(cpu, ST_FETCH);
 	clearRam(cpu);
@@ -80,13 +96,14 @@ void clearRam(BlueCpu_t* cpu) {
 	for (uint32_t i = 0; i < RAM_LEN; setRamCell(cpu, i++, 0x0000));
 }
 
+// NB: Don't use yet!
 void loadRam(BlueCpu_t* cpu, uint16_t* ram) {
 	clearRam(cpu);
 	memcopy(cpu->ram, ram, RAM_LEN);
 }
 
-uint8_t loadProgram(BlueCpu_t* cpu, uint16_t adr,
-                    uint16_t* program, uint16_t size) {
+uint8_t loadProgram(BlueCpu_t* cpu, uint16_t adr, uint16_t* program,
+                                                  uint16_t size) {
 	clearRam(cpu);
 	if ((adr + size) > RAM_LEN)
 		return 1;
@@ -137,13 +154,13 @@ uint8_t emulateCycle(BlueCpu_t* cpu) {
 	if (getSwitch(cpu, SW_POWER) == False) {
 		return 1;
 	}
-
+	
 	for (setClockpulse(cpu, 1);
 	     getClockpulse(cpu) < PULSE_AMT + 1;
 	     incClockpulse(cpu)) {
 		processTick(cpu);
 	}
-
+	
 	return 0;
 }
 
@@ -201,7 +218,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			break;
 		}
 		break;
-
+	
 	case OP_ADD:
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
@@ -231,11 +248,12 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 				            getRamCell(cpu, getRegister(cpu, REG_MAR)));
 				break;
 			case 7:;
-				uint32_t result = getRegister(cpu, REG_Z) + getRegister(cpu, REG_MBR);
+				int16_t result = (int16_t)getRegister(cpu, REG_Z) +
+				                 (int16_t)getRegister(cpu, REG_MBR);
 				if (detectOverflow(
 				      getRegister(cpu, REG_Z),
 				      getRegister(cpu, REG_MBR)
-				  ) != 0) {
+				                  ) != 0) {
 					setSwitch(cpu, SW_POWER, False);
 				}
 				setRegister(cpu, REG_A, (uint16_t)result);
@@ -247,7 +265,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			}
 		}
 		break;
-
+	
 	case OP_XOR:
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
@@ -281,7 +299,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			}
 		}
 		break;
-
+	
 	case OP_AND:
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
@@ -315,7 +333,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			}
 		}
 		break;
-
+	
 	case OP_IOR:
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
@@ -349,7 +367,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			}
 		}
 		break;
-
+	
 	case OP_NOT:
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
@@ -381,7 +399,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			}
 		}
 		break;
-
+	
 	case OP_LDA:
 		if (getState(cpu) == ST_FETCH) {
 			if (tick == 8) {
@@ -397,7 +415,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			case 3:
 				clrRegister(cpu, REG_MBR);
 				break;
-			case 5:
+			case 5:;
 				uint16_t ramonmar = getRamCell(cpu, getRegister(cpu, REG_MAR));
 				setRegister(cpu, REG_MBR, ramonmar);
 				setRegister(cpu, REG_A,   ramonmar);
@@ -409,7 +427,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			}
 		}
 		break;
-
+	
 	case OP_STA:
 		if (getState(cpu) == ST_FETCH) {
 			if (tick == 8) {
@@ -433,7 +451,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			}
 		}
 		break;
-
+	
 	case OP_SRJ:
 		switch (tick) {
 			case 6:
@@ -448,7 +466,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 				break;
 		}
 		break;
-
+	
 	case OP_JMA:
 		switch (tick) {
 			case 6:
@@ -464,7 +482,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 				break;
 		}
 		break;
-
+	
 	case OP_JMP:
 		switch (tick) {
 		case 6:
@@ -478,7 +496,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			break;
 		}
 		break;
-
+	
 	case OP_INP:
 		// NB: both OP_INP and OP_OUT expected to not work
 		if (getState(cpu) == ST_FETCH) {
@@ -511,7 +529,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			}
 		}
 		break;
-
+	
 	case OP_OUT:
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
@@ -543,7 +561,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			}
 		}
 		break;
-
+	
 	case OP_RAL:
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
@@ -573,7 +591,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			}
 		}
 		break;
-
+	
 	case OP_CSA:
 		switch (tick) {
 			case 6:
@@ -587,7 +605,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 				break;
 		}
 		break;
-
+	
 	case OP_NOP:
 		if (tick == 8) {
 			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));

@@ -28,17 +28,41 @@ uint16_t test_ADD[6] = {
 
 uint16_t test_JMP[6] = {
 // CODE   addr  ASM OP   Cycles  Registers state
-	0xF000, //0 | NOP xxx | 1     |
+	0xF000, //0 | NOP xxx | 1     | -0x7000 as data
 	0xF000, //1 | NOP xxx | 2     |
 	0xF005, //2 | NOP xxx | 3     |
 	0xA005, //3 | JMP 005 | 4     |
 	0x0000, //4 | HLT xxx |       |
-	0x1000, //5 | ADD 000 | 6     | A = F000
+	0x1000, //5 | ADD 000 | 6     | A = >F000<
+};
+
+uint16_t test_MATH[6] = {
+// CODE   addr  ASM OP   Cycles  Registers state
+	0xF000, //0 | NOP xxx | 1     |
+	0x1004, //1 | ADD 004 | 3     | A = 7FFF
+	0x1005, //2 | ADD 005 | 5     | A = 7FFF + FFFF = 0x7FFE
+	0x0000, //3 | HLT xxx | 6     |
+	0x7FFF, //4 |  data   |       |
+	0xFFFF, //5 |  data   |       | 0xFFFF = -1
+};
+
+uint16_t test_STALDA[8] = {
+// CODE   addr  ASM OP   Cycles  Registers state
+	0xF000, //0 | NOP xxx | 1     |
+	0x6003, //1 | LDA 003 | 3     | A = 0x6D4D
+	0xA004, //2 | JMP 004 | 4     |
+	0x6D4D, //3 |  data   |       |
+	0x7006, //4 | STA 006 | 6     |
+	0xA007, //5 | JMP 007 | 7     |
+	0x0000, //6 |  data   |       | = >0x6D4D after 4<
+	0x0000, //7 | HLT xxx | 8     |
 };
 
 int main(void) {
 	test_program(test_ADD, SIZE(test_ADD), 10, 0x400D);
-	test_program(test_JMP, SIZE(test_JMP),  6, 0xF000);
+	test_program(test_JMP, SIZE(test_JMP), 6, 0xF000);
+	test_program(test_MATH, SIZE(test_MATH), 6, 0x7FFE);
+	test_program(test_STALDA, SIZE(test_STALDA),  8, 0x6D4D);
 
 	printf("+---\n- Tests executed: %d\n- Tests failed: %d\n",
 	       test_ct, test_cf);
@@ -51,7 +75,7 @@ int main(void) {
 
 uint8_t test_program(uint16_t p[], uint16_t ps,
                      uint32_t cycles_to_emul, uint16_t expected_REG_A) {
-	printf("\nTest #%d:\n", test_ct++);
+	printf("\nTest #%d:\n", 1 + test_ct++);
 
 	// Initialising CPU. Don't forgt to provide malloc and free functions
 	// In this case they are used from stdlib
@@ -91,7 +115,7 @@ uint8_t test_program(uint16_t p[], uint16_t ps,
 		}
 	}
 
-	// Comparing register A for testing purposes
+	// Comparing register A for testing purposes. Error prone!
 	if (getRegister(cpu, REG_A) != expected_REG_A) {
 		printf("REG_A has value 0x%04X, was expecting 0x%04X\n",
 		       getRegister(cpu, REG_A), expected_REG_A);
@@ -99,7 +123,7 @@ uint8_t test_program(uint16_t p[], uint16_t ps,
 		return 3;
 	}
 
-	printf("Test passed! Deinitialising cpu.\n");
+	printf("Test %d passed! Deinitialising cpu.\n", test_ct);
 	deinitCpu(cpu, free);
 
 	return 0;
