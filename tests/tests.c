@@ -83,7 +83,7 @@ uint16_t test_SRJ[27] = {
 // CODE   addr  ASM OP   Cycles  Registers state
   /* Start */
 	0x8007, //0 | SRJ 004 | 1     | Running subroutine on 007
-	0xA017, //1 | JMP 00x | 20    | Going to other routine
+	0xA017, //1 | JMP 00x | 19    | Going to other routine
   /* Storage */
 	0x0000, //2 |  data   |       | SRJ pointer, 0001 after jump and STA
 	0x1111, //3 |  data   |       | const for sub-routine
@@ -93,10 +93,10 @@ uint16_t test_SRJ[27] = {
   /* Sub-Routine */
 	0x7002, //7 | STA 002 | 3     | ??? [002] = 0001
 	0x6003, //8 | LDA 003 | 5     | A = 1111
-	0x1003, //9 | ADD 003 | 7     | A = 1111 + 1111 = 2222
-	0x1003, //A | ADD 003 | 9     | A = 2222 + 1111 = 3333
-	0x7005, //B | STA 004 | 11    | [005] = 3333
-	0xA00F, //C | JMP 00F | 12    | Reconstructing pointer
+	0xF000, //9 | NOP 000 | 6     |
+	0x1003, //A | ADD 003 | 8     | A = 1111 + 1111 = 2222
+	0x7005, //B | STA 004 | 10    | [005] = 3333
+	0xA00F, //C | JMP 00F | 11    | Reconstructing pointer
 	0x0000, //D | HLT xxx |       |
 	0x0000, //E | HLT xxx |       |
 	/* Reconstructor */
@@ -106,12 +106,12 @@ uint16_t test_SRJ[27] = {
 	0x0000, //12|  data   |       | zero const
 	0x4011, //13| IOR 011 | 15    | Combining loaded adress with OP_JMP
 	0x7015, //14| STA 015 | 17    | Storing it in jmp-bck
-	0x0000, //15| jmp-bck | 19    | jumps back to non-sub-routine. Should be A001
+	0x0000, //15| jmp-bck | 18    | jumps back to non-sub-routine. Should be A001
 	0x0000, //16| HLT xxx |       | trap just in case.
 	/* Not Sub-Routine */
-	0x6005, //17| LDA 005 | 22    | A = 3333
-	0x1004, //1A| ADD 004 | 24    | A = 3333 + 5555 = 8888
-	0x0000, //1B| HLT xxx | 25    |
+	0x6005, //17| LDA 005 | 21    | A = 2222
+	0x1004, //1A| ADD 004 | 23    | A = 2222 + 5555 = 7777
+	0x0000, //1B| HLT xxx | 24    |
 };
 
 uint16_t test_JMA[11] = {
@@ -160,17 +160,17 @@ int main(void) {
 	testProgram(test_IOR,    SIZE(test_IOR),     7, 0xFDFB);
 	testProgram(test_NOT,    SIZE(test_NOT),     6, 0x7775);
 	testProgram(test_JMP,    SIZE(test_JMP),     7, 0xF000);
-	testProgram(test_SRJ,    SIZE(test_SRJ),    26, 0x8888);
+	testProgram(test_SRJ,    SIZE(test_SRJ),    27, 0x7777);
 	testProgram(test_JMA,    SIZE(test_JMA),    10, 0x6DAD);
 	testProgram(test_STALDA, SIZE(test_STALDA), 11, 0x6D4E);
 	testProgram(test_RAL,    SIZE(test_RAL),    10, 0x5555);
-
+	
 	printf("+---\n- Tests executed: %d\n- Tests failed: %d\n",
 	       test_ct, test_cf);
 	if (test_cf == 0)
 		printf("- All tests passed!\n");
 	printf("+---\n");
-
+	
 	return (test_cf == 0) ? 0: test_cf;
 }
 

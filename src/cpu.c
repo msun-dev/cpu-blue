@@ -1,7 +1,9 @@
 #include "../include/cpu.h"
 
-#define VAL(x)  (x & 0x7FFF)
-#define SIGN(x) (x & 0x8000) // 1 = negative
+#define VAL(x)    (x & 0x7FFF)
+#define SIGN(x)   (x & 0x8000) // 1 = negative
+#define INT16_MAX 0x7FFF
+#define INT16_MIN 0x8000
 
 // Secret functions
 static void memcopy(uint16_t* dest, const uint16_t* src, uint16_t size) {
@@ -11,24 +13,15 @@ static void memcopy(uint16_t* dest, const uint16_t* src, uint16_t size) {
 	}
 }
 
-static Bool detectOverflow(uint16_t Z, uint16_t MBR) {
-	// if same sign
-	
-	// if (!(VAL(Z) | VAL(MBR)) == 0) { // all bits flipped
-	//  if excessive bits
-	//   return True; positive overflow
-	// }
-	// else if {
-	//  
-	// }
-	//
-
-	uint32_t result = Z + MBR;
-	if ((Z & 0x8000) && (MBR & 0x8000) && !(result & 0x8000))
-		return 1;
-	else if (!(Z & 0x8000) && !(MBR & 0x8000) && (result & 0x8000))
-		return 2;
-	return 0;
+static Bool detectOverflow(int16_t a, int16_t b) {
+	if (SIGN(a) == SIGN(b)) {
+		if (a > 0 && b > INT16_MAX - a) {
+			return True;
+		} else if (a < 0 && b < INT16_MIN - a) {
+			return True;
+		}
+	}
+	return False;
 }
 
 // Initialisation
@@ -246,15 +239,14 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 				            getRamCell(cpu, getRegister(cpu, REG_MAR)));
 				break;
 			case 7:;
-				int16_t result = (int16_t)getRegister(cpu, REG_Z) +
-				                 (int16_t)getRegister(cpu, REG_MBR);
-				if (detectOverflow(
-				      getRegister(cpu, REG_Z),
-				      getRegister(cpu, REG_MBR)
-				                  ) != 0) {
+				if (detectOverflow((int16_t)getRegister(cpu, REG_Z),
+				                   (int16_t)getRegister(cpu, REG_MBR)) != 0) {
 					setSwitch(cpu, SW_POWER, False);
+					break;
 				}
-				setRegister(cpu, REG_A, (uint16_t)result);
+				int16_t r = (int16_t)getRegister(cpu, REG_Z) +
+				            (int16_t)getRegister(cpu, REG_MBR);
+				setRegister(cpu, REG_A, (uint16_t)r);
 				break;
 			case 8:
 				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
