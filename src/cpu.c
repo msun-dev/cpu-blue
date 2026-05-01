@@ -1,7 +1,5 @@
 #include "../include/cpu.h"
 
-// TODO: Add more checks to loadprogram. Or have a typedef for a program, maybe
-
 #define VAL(x)  (x & 0x7FFF)
 #define SIGN(x) (x & 0x8000) // 1 = negative
 
@@ -208,7 +206,7 @@ uint8_t getInstruction(BlueCpu_t* cpu) {
 void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 	uint8_t cur_instr = getInstruction(cpu);
 	switch (cur_instr) {
-	case OP_HLT:
+	case OP_HLT: // 0x0
 		switch (tick) {
 		case 7:
 			setSwitch(cpu, SW_POWER, False);
@@ -219,7 +217,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_ADD:
+	case OP_ADD: // 0x1
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
 			case 6:
@@ -266,7 +264,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_XOR:
+	case OP_XOR: // 0x2
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
 			case 6:
@@ -287,6 +285,11 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			case 3:
 				clrRegister(cpu, REG_A);
 				clrRegister(cpu, REG_MBR);
+				break;
+			case 4:
+				setRegister(cpu,
+				            REG_MBR,
+				            getRamCell(cpu, getRegister(cpu, REG_MAR)));
 				break;
 			case 7:
 				setRegister(cpu, REG_A,
@@ -300,7 +303,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_AND:
+	case OP_AND: // 0x3
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
 			case 6:
@@ -322,6 +325,11 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 				clrRegister(cpu, REG_A);
 				clrRegister(cpu, REG_MBR);
 				break;
+			case 4:
+				setRegister(cpu,
+				            REG_MBR,
+				            getRamCell(cpu, getRegister(cpu, REG_MAR)));
+				break;
 			case 7:
 				setRegister(cpu, REG_A,
 				            getRegister(cpu, REG_Z) & getRegister(cpu, REG_MBR));
@@ -334,7 +342,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_IOR:
+	case OP_IOR: // 0x4
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
 			case 6:
@@ -345,6 +353,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 				break;
 			case 8:
 				setRegister(cpu, REG_MAR, getRegister(cpu, REG_IR) & 0x0FFF);
+				setState(cpu, ST_EXECUTE);
 				break;
 			}
 		}
@@ -354,6 +363,11 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			case 3:
 				clrRegister(cpu, REG_A);
 				clrRegister(cpu, REG_MBR);
+				break;
+			case 4:
+				setRegister(cpu,
+				            REG_MBR,
+				            getRamCell(cpu, getRegister(cpu, REG_MAR)));
 				break;
 			case 7:
 				setRegister(cpu, REG_A,
@@ -367,7 +381,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_NOT:
+	case OP_NOT: // 0x5
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
 			case 6:
@@ -399,7 +413,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_LDA:
+	case OP_LDA: // 0x6
 		if (getState(cpu) == ST_FETCH) {
 			if (tick == 8) {
 				setState(cpu, ST_EXECUTE);
@@ -427,7 +441,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_STA:
+	case OP_STA: // 0x7
 		if (getState(cpu) == ST_FETCH) {
 			if (tick == 8) {
 				setState(cpu, ST_EXECUTE);
@@ -451,7 +465,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_SRJ:
+	case OP_SRJ: // 0x8
 		switch (tick) {
 			case 6:
 				setRegister(cpu, REG_A, getRegister(cpu, REG_PC) & 0x0FFF);
@@ -466,7 +480,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_JMA:
+	case OP_JMA: // 0x9
 		switch (tick) {
 			case 6:
 				if ((getRegister(cpu, REG_A) & 0x8000))
@@ -482,7 +496,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_JMP:
+	case OP_JMP: // 0xA
 		switch (tick) {
 		case 6:
 			setRegister(cpu, REG_PC, 0);
@@ -561,7 +575,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_RAL:
+	case OP_RAL: // 0xD
 		if (getState(cpu) == ST_FETCH) {
 			switch (tick) {
 			case 6:
@@ -581,7 +595,9 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 					clrRegister(cpu, REG_A);
 					break;
 				case 2:
-					setRegister(cpu, REG_A, 2 * getRegister(cpu, REG_Z));
+					setRegister(cpu, REG_A,
+					            ((getRegister(cpu, REG_Z) & 0x8000) >> 15 |
+					             (getRegister(cpu, REG_Z) * 2)));
 					break;
 				case 8:
 					setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
@@ -591,7 +607,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_CSA:
+	case OP_CSA: // 0xE
 		switch (tick) {
 			case 6:
 				clrRegister(cpu, REG_A);
@@ -605,7 +621,7 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 		}
 		break;
 	
-	case OP_NOP:
+	case OP_NOP: // 0xF
 		if (tick == 8) {
 			setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
 		}
