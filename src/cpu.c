@@ -2,7 +2,7 @@
 
 // TODO: Add more checks to loadprogram. Or have a typedef for a program, maybe
 
-#define EXP(x)  (x & 0x7FFF)
+#define VAL(x)  (x & 0x7FFF)
 #define SIGN(x) (x & 0x8000) // 1 = negative
 
 // Secret functions
@@ -16,7 +16,7 @@ static void memcopy(uint16_t* dest, const uint16_t* src, uint16_t size) {
 static Bool detectOverflow(uint16_t Z, uint16_t MBR) {
 	// if same sign
 	
-	// if (!(EXP(Z) | EXP(MBR)) == 0) { // all bits flipped
+	// if (!(VAL(Z) | VAL(MBR)) == 0) { // all bits flipped
 	//  if excessive bits
 	//   return True; positive overflow
 	// }
@@ -358,7 +358,6 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 			case 7:
 				setRegister(cpu, REG_A,
 				            getRegister(cpu, REG_Z) | getRegister(cpu, REG_MBR));
-				setState(cpu, ST_EXECUTE); // NB: no execute state change in the book?
 				break;
 			case 8:
 				setRegister(cpu, REG_MAR, getRegister(cpu, REG_PC));
@@ -470,11 +469,11 @@ void execInstruction(BlueCpu_t* cpu, uint8_t tick) {
 	case OP_JMA:
 		switch (tick) {
 			case 6:
-				if ((getRegister(cpu, REG_A) & 0x8000)) // NB: Can be wrong
+				if ((getRegister(cpu, REG_A) & 0x8000))
 					clrRegister(cpu, REG_PC);
 				break;
 			case 7:
-				if ((getRegister(cpu, REG_A) & 0x8000)) // NB: Can be wrong
+				if ((getRegister(cpu, REG_A) & 0x8000))
 					setRegister(cpu, REG_PC, getRegister(cpu, REG_IR) & 0x0FFF);
 				break;
 			case 8:
