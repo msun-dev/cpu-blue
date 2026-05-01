@@ -151,7 +151,27 @@ uint16_t test_RAL[5] = {
 	0x0000, //4 | HLT xxx | 5     |
 };
 
-//Overflow
+uint16_t test_OF[7] = {
+// CODE   addr  ASM OP   Cycles  Registers state
+	0xA003, //0 | JMP 003 | 1     |
+	0x7123, //1 |  data   |       |
+	0x7FFF, //2 |  data   |       |
+	0x6001, //3 | LDA 001 | 3     | A = 7123
+	0x1002, //4 | ADD 002 | 5     | A = 7123 + 7FFF = !!!OF!!!, POWER = False
+	0x6004, //5 | LDA 004 | -     | A = 1002, that should not happen!
+	0x0000, //6 | NOP xxx | -     |
+};
+
+uint16_t test_UF[7] = {
+// CODE   addr  ASM OP   Cycles  Registers state
+	0xA003, //0 | JMP 003 | 1     |
+	0x8123, //1 |  data   |       |
+	0x8FFF, //2 |  data   |       |
+	0x6001, //3 | LDA 001 | 3     | A = 8123
+	0x1002, //4 | ADD 002 | 5     | A = 8123 - 8FFF = !!!UF!!!, POWER = False
+	0x6004, //5 | LDA 004 | -     | A = 1002, that should not happen!
+	0x0000, //6 | NOP xxx | -     |
+};
 
 int main(void) {
 	testProgram(test_ADD,    SIZE(test_ADD),    15, 0x001E);
@@ -164,6 +184,8 @@ int main(void) {
 	testProgram(test_JMA,    SIZE(test_JMA),    10, 0x6DAD);
 	testProgram(test_STALDA, SIZE(test_STALDA), 11, 0x6D4E);
 	testProgram(test_RAL,    SIZE(test_RAL),    10, 0x5555);
+	testProgram(test_OF,     SIZE(test_OF),     10, 0x0000);
+	testProgram(test_UF,     SIZE(test_UF),     10, 0x0000);
 	
 	printf("+---\n- Tests executed: %d\n- Tests failed: %d\n",
 	       test_ct, test_cf);
@@ -192,7 +214,7 @@ uint8_t testProgram(uint16_t p[], uint16_t ps,
 	//                            program pointer, program size)
 	// Care with the size beccause inner memcpy will yoink data after the array
 	if (loadProgram(cpu, 0x0000, p, ps)) {
-		printf("Size and address exceedes memory! Nothing written\n");
+		printf("Size and/or address exceedes memory! Program is not loaded\n");
 		return 2;
 	}
 

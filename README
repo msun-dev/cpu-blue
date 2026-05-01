@@ -7,9 +7,9 @@ Computer Architecture (1970) book.
 https://gecko05.github.io/2022/10/22/first-emulator-part1.html.
 
 	If you want to use this emulator yourself - take a look at the ./tests/test.c
-file: usage example is in the test_program function. But it kinda doesn't work
-so don't use this emulator yet. DON'T USE IT, IT DOESN'T WORK AS INTENDED.
-YOU HEAR ME?????
+file: usage example is in the test_program function. Kinda works so you can use
+small programs on this. The only thing is DO NOT FORGET ABOUT OVERFLOWS. I did
+a mistake in the test and thought that it was a bug. Wild stuff!
 
 	Don't forget to take a look at NB comments: `grep -rn "// NB: "`
 if something fails unexpectedly. You can find some info in them.
@@ -19,18 +19,18 @@ Things implemented:
 - CPU cycle
 - Every opcode besides INP and OUT
 - Does not uses standart library (am I a cool guy?)
+- Most of the opcodes tested in the ./tests/tests.c
 
 Left to implement/do:
 - INP, OUT commands (reason below)
 - Devices interface to communicate with CPU
-- Use most of the cpu operations in test program
-- Overflow detection without uint32
 - Some kind of way to interact with the CPU (explained in the note below)
 
-?License: Do whatever you want.
+?License: First you credit me: `Code taken from this guy -> github.com/msun-dev`,
+then you do whatever you want except for removing that credit line.
 
 How to contribute: "Do You really want to do it?". But on the serious note: file
-an issue or something, we can discuss what's up there.
+an issue or something, we can discuss *what's up* in there.
 
 Commit description logic (or how do you even call this?):
 	Commits (latest) have 2 parts defined:
@@ -73,7 +73,8 @@ kind of User API and hide inner functions (wanna see them in the header
 uncommented and make compiler to keep track if something implemented or not)
 but failed miserably.
 
-	And I kinda succeeded in the project structure. Kinda okayish.
+	And I kinda succeeded in the project structure. Kinda okayish. (Even tho it's
+just a 3 folder and 2 files).
 	And this way of writing README is waaaaaay better than that shit github has.
 Take that! you shitass platform, I'll not use your shit formatting you provide
 in the markdown files!
